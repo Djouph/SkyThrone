@@ -24,12 +24,13 @@ class Unit : Card
     public int attack;
     public int Health;
     public Faction faction;
-
+    public bool celestialWard;
+    public bool taunt;
     private Action<int, Board> takeDamage;
     private Action<Board, Unit> adrenaline;
     private Action<Board, Unit> onDeploy;
     private Action<Board, Unit> lastWords;
-    public Unit(int cost, string picture, string name, string description, int attack, int Health, Faction faction, int id, Action<Board, Unit> lastWords = null!, Action<int, Board> takeDamage = null!, Action<Board, Unit> adrenaline = null!, Action<Board, Unit> onDeploy = null!) : base(picture, picture, description, id)
+    public Unit(int cost, string picture, string name, string description, int attack, int Health, Faction faction, int id, bool taunt = false, bool celestialWard = false, Action<Board, Unit> lastWords = null!, Action<int, Board> takeDamage = null!, Action<Board, Unit> adrenaline = null!, Action<Board, Unit> onDeploy = null!) : base(picture, picture, description, id)
     {
         this.faction = faction;
         this.cost = cost;
@@ -40,17 +41,26 @@ class Unit : Card
         this.takeDamage = takeDamage;
         this.adrenaline = adrenaline;
         this.onDeploy = onDeploy;
+        this.celestialWard = celestialWard;
+        this.taunt = taunt;
     }
 
     public virtual bool TakeDamage(int damage, Board b)
     {
         if (takeDamage == null)
         {
-            Health -= damage;
-            if (Health <= 0)
+            if (celestialWard)
             {
-                b.kill(this);
-                return true;
+                celestialWard = false;
+            }
+            else
+            {
+                Health -= damage;
+                if (Health <= 0)
+                {
+                    b.kill(this);
+                    return true;
+                }
             }
         }
         else
@@ -96,7 +106,7 @@ class Unit : Card
 
     public override Card Clone()
     {
-        return new Unit(cost, picture, name, description, attack, Health, faction, id, lastWords, takeDamage, adrenaline, onDeploy);
+        return new Unit(cost, picture, name, description, attack, Health, faction, id, taunt, celestialWard, lastWords, takeDamage, adrenaline, onDeploy);
     }
 }
 

@@ -5,7 +5,7 @@ class Program
     static void Main()
     {
         Player p = new Player(new() { 13, 14, 15, 16, 17, 18, 19, 20, 21, 22 });
-        Player e = new Player(new() { 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 });
+        Player e = new Player(new() { 35, 35, 35, 35, 35, 35, 35, 35, 35, 35 });
         Board board = new Board(p, e);
         board.GameStart();
 
@@ -269,9 +269,9 @@ class Board
     public void BattlePhase()
     {
 
-        for (int i = 0; i < p.board.Count; i++)
+        for (int i = 0; i < current.board.Count; i++)
         {
-            Unit Unit = (Unit)p.board[i];
+            Unit Unit = (Unit)current.board[i];
             Unit.Adrenaline(this);
         }
         if (current == p)
@@ -284,9 +284,9 @@ class Board
             current = p;
             other = e;
         }
-        for (int i = 0; i < e.board.Count; i++)
+        for (int i = 0; i < current.board.Count; i++)
         {
-            Unit Unit = (Unit)e.board[i];
+            Unit Unit = (Unit)current.board[i];
             Unit.Adrenaline(this);
         }
         bool ispdead = false;

@@ -759,7 +759,19 @@ class DataBase
     );
 
 
+    //knights/ royalty: ids- 35-45
 
+    static Unit k1 = new(
+    cost: 1,
+    picture: "pic",
+    name: "Trainee Knight",
+    description: "celestial ward",
+    attack: 2,
+    Health: 1,
+    id: 35,
+    faction: Faction.Kingdom,
+    celestialWard: true
+    );
 
 
 
@@ -815,15 +827,8 @@ class DataBase
         lookup.Add(u10.id, u10);
         lookup.Add(u11.id, u11);
         lookup.Add(u12.id, u12);
-
-
-
-
-
-
-
-
-
+        //KINGDOM:
+        lookup.Add(k1.id, k1);
 
 
     }

@@ -5,4 +5,6 @@ enum Faction
     Beast,
     Robot,
     Undead,
+
+    Kingdom
 }

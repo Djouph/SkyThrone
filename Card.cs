@@ -24,13 +24,13 @@ class Unit : Card
     public int attack;
     public int Health;
     public Faction faction;
-    public bool celestialWard;
+    public bool HolyGuard;
     public bool taunt;
     private Action<int, Board> takeDamage;
     private Action<Board, Unit> adrenaline;
     private Action<Board, Unit> onDeploy;
     private Action<Board, Unit> lastWords;
-    public Unit(int cost, string picture, string name, string description, int attack, int Health, Faction faction, int id, bool taunt = false, bool celestialWard = false, Action<Board, Unit> lastWords = null!, Action<int, Board> takeDamage = null!, Action<Board, Unit> adrenaline = null!, Action<Board, Unit> onDeploy = null!) : base(picture, picture, description, id)
+    public Unit(int cost, string picture, string name, string description, int attack, int Health, Faction faction, int id, bool taunt = false, bool HolyGuard = false, Action<Board, Unit> lastWords = null!, Action<int, Board> takeDamage = null!, Action<Board, Unit> adrenaline = null!, Action<Board, Unit> onDeploy = null!) : base(picture, picture, description, id)
     {
         this.faction = faction;
         this.cost = cost;
@@ -41,7 +41,7 @@ class Unit : Card
         this.takeDamage = takeDamage;
         this.adrenaline = adrenaline;
         this.onDeploy = onDeploy;
-        this.celestialWard = celestialWard;
+        this.HolyGuard = HolyGuard;
         this.taunt = taunt;
     }
 
@@ -49,9 +49,9 @@ class Unit : Card
     {
         if (takeDamage == null)
         {
-            if (celestialWard)
+            if (HolyGuard)
             {
-                celestialWard = false;
+                HolyGuard = false;
             }
             else
             {
@@ -106,7 +106,7 @@ class Unit : Card
 
     public override Card Clone()
     {
-        return new Unit(cost, picture, name, description, attack, Health, faction, id, taunt, celestialWard, lastWords, takeDamage, adrenaline, onDeploy);
+        return new Unit(cost, picture, name, description, attack, Health, faction, id, taunt, HolyGuard, lastWords, takeDamage, adrenaline, onDeploy);
     }
 }
 

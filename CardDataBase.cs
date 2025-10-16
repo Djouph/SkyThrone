@@ -765,12 +765,37 @@ class DataBase
     cost: 1,
     picture: "pic",
     name: "Trainee Knight",
-    description: "celestial ward",
+    description: "HolyGuard",
     attack: 2,
     Health: 1,
     id: 35,
     faction: Faction.Kingdom,
-    celestialWard: true
+    HolyGuard: true
+    );
+
+
+    static Unit k2 = new(
+    cost: 3,
+    picture: "pic",
+    name: "Hollow Knight",
+    description: "HolyGuard",
+    attack: 3,
+    Health: 3,
+    id: 36,
+    faction: Faction.Kingdom,
+    HolyGuard: true
+    );
+
+      static Unit k3 = new(
+    cost: 3,
+    picture: "pic",
+    name: "Hollow Knight",
+    description: "HolyGuard",
+    attack: 3,
+    Health: 3,
+    id: 37,
+    faction: Faction.Kingdom,
+    HolyGuard: true
     );
 
 

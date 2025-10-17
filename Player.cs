@@ -6,8 +6,9 @@ class Player
     public List<Card> hand;
     public List<Card> deck;
     public List<Card> board;
-    public int maxEnergy;
+    public int MaxEnergy;
     public int MaxHandSize;
+    public int MaxBoardSize;
     public int StartingHand;
     public int energy;
     public int maxenergy;
@@ -21,6 +22,7 @@ class Player
         hand = [];
         deck = [];
         board = [];
+        maxboardsize= 6;
         MaxHandSize = 11;
         StartingHand = 3;
         energy = 0;

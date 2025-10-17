@@ -203,7 +203,7 @@ class Board
     {
 
         bool endPhase = false;
-        if (current.maxenergy < current.maxEnergy)
+        if (current.maxenergy < current.MaxEnergy)
         {
             current.maxenergy += 1;
         }

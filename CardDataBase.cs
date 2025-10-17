@@ -777,26 +777,122 @@ class DataBase
     static Unit k2 = new(
     cost: 3,
     picture: "pic",
-    name: "Hollow Knight",
-    description: "HolyGuard",
+    name: "Dark Knight",
+    description: "HolyGuard, last words: ressumon this card",
     attack: 3,
     Health: 3,
     id: 36,
     faction: Faction.Kingdom,
-    HolyGuard: true
+    HolyGuard: true,
+    lastWords: (b, Card) =>
+    {
+        if (b.current.board.Contains(Card))
+        {
+            int temp = b.current.board.IndexOf(Card);
+            b.current.board[temp] = CardFromId(36);
+        }
+        else
+        {
+            int temp = b.other.board.IndexOf(Card);
+            b.other.board[temp] = CardFromId(36);
+        }
+    }
     );
 
-      static Unit k3 = new(
-    cost: 3,
+
+    static Unit k3 = new(
+    cost: 4,
     picture: "pic",
-    name: "Hollow Knight",
-    description: "HolyGuard",
-    attack: 3,
-    Health: 3,
+    name: "Prince Of Nazar",
+    description: "if this card's health is 3 or less summon Guardian to its right to defend it! (doesn't work if board is full)",
+    attack: 1,
+    Health: 5,
     id: 37,
     faction: Faction.Kingdom,
-    HolyGuard: true
+    takeDamage: (damage, b, Card) =>
+    {
+        if (Card.HolyGuard)
+        {
+            Card.HolyGuard = false;
+        }
+        else
+        {
+            Card.Health -= damage;
+            if (Card.Health <= 3)
+            {
+            int temp = b.current.board.IndexOf(Card); 
+            if(b.current.board.Count== b.current.MaxBoardSize){
+            for(int i = b.current.board.Count; i>temp; i--)
+                {
+                    b.current.board[i]=b.current.board[i+1];
+                }    
+            b.current.board[temp+1]=CardFromId(38);
+            }
+            }
+            if (Card.Health <= 0)
+            {
+                b.kill(Card);
+            }
+            
+        }
+    }
+
     );
+
+
+    static Unit k4 = new(
+    cost: 6,
+    picture: "pic",
+    name: "Guardian",
+    description: "Protect the heir!",
+    attack: 6,
+    Health: 6,
+    id: 38,
+    faction: Faction.Kingdom
+    // taunt: true;
+    );
+
+static Unit k5 = new(
+    cost: 2,
+    picture: "pic",
+    name: "Royal Healer",
+    description: "Adrenaline: Heal your leader for 2 HP and give the card to its right HolyGuard.",
+    attack: 1,
+    Health: 3,
+    id: 39,
+    faction: Faction.Kingdom,
+    adrenaline: (b, Card) =>
+    {
+        b.current.health += 2;
+         int temp = b.current.board.IndexOf(Card); 
+         ((Unit)b.current.board[temp+1]).HolyGuard=true;
+    }
+);
+
+
+    static Unit k6 = new(
+    cost: 3,
+    picture: "pic",
+    name: "Castle Defender",
+    description: "Adrenaline: Gain +1/+2 if your leader has more HP than the opponent.",
+    attack: 2,
+    Health: 3,
+    id: 40,
+    faction: Faction.Kingdom,
+    adrenaline: (b, Card) =>
+    {
+        if (b.current.health > b.other.health)
+        {
+            Card.attack += 1;
+            Card.Health += 2;
+        }
+    }
+);
+
+
+
+    
+
 
 
 
@@ -854,6 +950,11 @@ class DataBase
         lookup.Add(u12.id, u12);
         //KINGDOM:
         lookup.Add(k1.id, k1);
+        lookup.Add(k2.id, k2);
+        lookup.Add(k3.id, k3);
+        lookup.Add(k4.id, k4);
+
+
 
 
     }

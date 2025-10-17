@@ -26,11 +26,11 @@ class Unit : Card
     public Faction faction;
     public bool HolyGuard;
     public bool taunt;
-    private Action<int, Board> takeDamage;
+    private Action<int, Board, Unit> takeDamage;
     private Action<Board, Unit> adrenaline;
     private Action<Board, Unit> onDeploy;
     private Action<Board, Unit> lastWords;
-    public Unit(int cost, string picture, string name, string description, int attack, int Health, Faction faction, int id, bool taunt = false, bool HolyGuard = false, Action<Board, Unit> lastWords = null!, Action<int, Board> takeDamage = null!, Action<Board, Unit> adrenaline = null!, Action<Board, Unit> onDeploy = null!) : base(picture, picture, description, id)
+    public Unit(int cost, string picture, string name, string description, int attack, int Health, Faction faction, int id, bool taunt = false, bool HolyGuard = false, Action<Board, Unit> lastWords = null!, Action<int, Board, Unit> takeDamage = null!, Action<Board, Unit> adrenaline = null!, Action<Board, Unit> onDeploy = null!) : base(picture, picture, description, id)
     {
         this.faction = faction;
         this.cost = cost;
@@ -65,7 +65,7 @@ class Unit : Card
         }
         else
         {
-            takeDamage.Invoke(damage, b);
+            takeDamage.Invoke(damage, b, this);
         }
         return false;
     }

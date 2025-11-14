@@ -6,5 +6,13 @@ enum Faction
     Robot,
     Undead,
 
-    Kingdom
+    Kingdom,
+   FireElementals,
+   WaterElementals,
+
+   AirElementals,
+
+   EarthElementals
+
+
 }

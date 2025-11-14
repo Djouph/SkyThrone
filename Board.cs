@@ -1,11 +1,12 @@
 ﻿using System.Net.NetworkInformation;
+using System.Security.Cryptography.X509Certificates;
 
 class Program
 {
     static void Main()
     {
-        Player p = new Player(new() { 13, 14, 15, 16, 17, 18, 19, 20, 21, 22 });
-        Player e = new Player(new() { 35, 35, 35, 35, 35, 35, 35, 35, 35, 35 });
+        Player p = new Player(new() { 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,});
+        Player e = new Player(new() { 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52,});
         Board board = new Board(p, e);
         board.GameStart();
 
@@ -69,7 +70,7 @@ class Board
             }
             else
             {
-                Console.WriteLine("there is no room in the board");
+                Console.WriteLine("the board is full");
             }
         }
     }
@@ -201,7 +202,6 @@ class Board
 
     public void PreparationPhase()
     {
-
         bool endPhase = false;
         if (current.maxenergy < current.MaxEnergy)
         {
@@ -238,7 +238,9 @@ class Board
                 Console.WriteLine("do you want to play this card or view it? p/v");
                 if (char.Parse(Console.ReadLine()!) == 'p')
                 {
+                    current.LastFaction = ((Unit)current.hand[cardplay]).faction;
                     Play((Unit)current.hand[cardplay]);
+                    
                 }
                 else if (char.Parse(Console.ReadLine()!) == 'v')
                 {
@@ -268,108 +270,94 @@ class Board
 
     public void BattlePhase()
     {
-
-        for (int i = 0; i < current.board.Count; i++)
+        Unit? FindTaunt(Player p)
         {
-            Unit Unit = (Unit)current.board[i];
-            Unit.Adrenaline(this);
-        }
-        if (current == p)
-        {
-            current = e;
-            other = p;
-        }
-        else
-        {
-            current = p;
-            other = e;
-        }
-        for (int i = 0; i < current.board.Count; i++)
-        {
-            Unit Unit = (Unit)current.board[i];
-            Unit.Adrenaline(this);
-        }
-        bool ispdead = false;
-        bool isedead = false;
-        List<Card> longest = new List<Card>();
-        List<Card> shortest = new List<Card>();
-        if (p.board.Count > e.board.Count)
-        {
-            longest = p.board;
-            shortest = e.board;
-        }
-        else
-        {
-            longest = e.board;
-            shortest = p.board;
-        }
-        while (e.board.Count != 0 && p.board.Count != 0)
-        {
-            int j = 0;
-            for (int i = 0; i < shortest.Count; i++)
+            for (int i = 0; i < p.board.Count; i++)
             {
-                ispdead = false;
-                isedead = false;
-                Console.WriteLine(longest[i].name + " is attacking " + shortest[j].name);
-                int damage = 0;
-                damage = ((Unit)longest[j]).attack;
-                ispdead = ((Unit)longest[j]).TakeDamage(((Unit)shortest[i]).Attack(), this);
-                isedead = ((Unit)shortest[i]).TakeDamage(damage, this);
-                if (ispdead)
-                {
-                    if (p.board.Count > e.board.Count)
-                    {
-                        longest = p.board;
-                        shortest = e.board;
-                    }
-                    else
-                    {
-                        longest = e.board;
-                        shortest = p.board;
-                    }
-                    j--;
-                }
-                if (isedead)
-                {
-                    if (p.board.Count > e.board.Count)
-                    {
-                        longest = p.board;
-                        shortest = e.board;
-                    }
-                    else
-                    {
-                        longest = e.board;
-                        shortest = p.board;
-                    }
-                    i--;
-                }
-                j++;
+                Unit u = (Unit)p.board[i];
+                if (u.taunt) return u;
             }
-            if (!(e.board.Count != 0 && p.board.Count != 0))
+            return null;
+        }
+
+        void ActivateAdrenaline(Player p)
+        {
+            if (current != p)
             {
-                return;
+                Player temp = current;
+                current = p;
+                other = temp;
             }
 
-            for (int i = shortest.Count; i < longest.Count; i++)
+            for (int i = 0; i < p.board.Count; i++)
             {
-
-                ispdead = false;
-                isedead = false;
-                Console.WriteLine(longest[i].name + " is attacking " + shortest[shortest.Count - 1].name);
-                ispdead = ((Unit)longest[i]).TakeDamage(((Unit)shortest[shortest.Count - 1]).Attack(), this);
-                isedead = ((Unit)shortest[shortest.Count - 1]).TakeDamage(((Unit)longest[i]).Attack(), this);
-                if (ispdead)
-                {
-                    kill((Unit)longest[i]);
-                    i--;
-                }
-                if (isedead)
-                {
-                    kill((Unit)shortest[shortest.Count - 1]);
-                }
+                Unit u = (Unit)p.board[i];
+                u.Adrenaline(this);
             }
         }
+
+        void DoAttack(Player attacker, Player enemy, ref int attackerIndex, ref int enemyIndex)
+        {
+            if (attackerIndex >= attacker.board.Count) return;
+
+            Unit? enemyTaunt = FindTaunt(enemy);
+            Unit currentUnit = (Unit)attacker.board[attackerIndex];
+
+            bool enemyDied = false;
+            int deadIndex = -1;
+
+            if (enemyTaunt != null)
+            {
+                Console.WriteLine($"{currentUnit.name} is attacking taunting {enemyTaunt.name}");
+                deadIndex = enemy.board.IndexOf(enemyTaunt);
+                enemyDied = enemyTaunt.TakeDamage(currentUnit.attack, this);
+            }
+            else
+            {
+                int position = attackerIndex;
+                if (position >= enemy.board.Count) position = enemy.board.Count - 1;
+                if (position < 0)
+                {
+                    System.Console.WriteLine("Enemy doesn't have any units");
+                    attackerIndex++;
+                    return;
+                }
+
+                Unit? enemyCard = (Unit)enemy.board[position];
+                Console.WriteLine($"{currentUnit.name} is attacking {enemyCard.name}");
+                enemyDied = enemyCard.TakeDamage(currentUnit.attack, this);
+                deadIndex = position;
+            }
+
+            if (enemyDied && deadIndex < enemyIndex)
+            {
+                enemyIndex--;
+            }
+
+            attackerIndex++;
+        }
+
+        int shortIndex = 0;
+        int longIndex = 0;
+
+        ActivateAdrenaline(p);
+        ActivateAdrenaline(e);
+
+        Player shortest, longest;
+        if (p.board.Count <= e.board.Count) (shortest, longest) = (p, e);
+        else (shortest, longest) = (e, p);
+
+        while (shortIndex < shortest.board.Count || longIndex < longest.board.Count)
+        {
+            DoAttack(shortest, longest, ref shortIndex, ref longIndex);
+            DoAttack(longest, shortest, ref longIndex, ref shortIndex);
+        }
+
+        current = p;
+        other = e;
     }
+
+
 
     public void EndPhase()
     {

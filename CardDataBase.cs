@@ -547,6 +547,7 @@ class DataBase
         attack: 1,
         Health: 2,
         id: 26,
+        taunt: true,
         faction: Faction.Undead,
         lastWords: (b, Card) =>
         {
@@ -642,11 +643,12 @@ class DataBase
         cost: 5,
         picture: "pic",
         name: "Necrotic Horror",
-        description: "Last Words: Summon two 1/1 Ghoul Grunt.",
+        description: "Taunt, Last Words: Summon two 1/1 Ghoul Grunt.",
         attack: 4,
         Health: 3,
         id: 31,
         faction: Faction.Undead,
+        taunt: true,
         lastWords: (b, Card) =>
         {
             if (b.current.board.Contains(Card))
@@ -759,7 +761,7 @@ class DataBase
     );
 
 
-    //knights/ royalty: ids- 35-45
+    //Kingdom Of Nazar: ids- 35-45
 
     static Unit k1 = new(
     cost: 1,
@@ -778,7 +780,7 @@ class DataBase
     cost: 3,
     picture: "pic",
     name: "Dark Knight",
-    description: "HolyGuard, last words: ressumon this card",
+    description: "HolyGuard, last words: resummon this card",
     attack: 3,
     Health: 3,
     id: 36,
@@ -820,20 +822,21 @@ class DataBase
             Card.Health -= damage;
             if (Card.Health <= 3)
             {
-            int temp = b.current.board.IndexOf(Card); 
-            if(b.current.board.Count== b.current.MaxBoardSize){
-            for(int i = b.current.board.Count; i>temp; i--)
+                int temp = b.current.board.IndexOf(Card);
+                if (b.current.board.Count == b.current.MaxBoardSize)
                 {
-                    b.current.board[i]=b.current.board[i+1];
-                }    
-            b.current.board[temp+1]=CardFromId(38);
-            }
+                    for (int i = b.current.board.Count; i > temp; i--)
+                    {
+                        b.current.board[i] = b.current.board[i + 1];
+                    }
+                    b.current.board[temp + 1] = CardFromId(38);
+                }
             }
             if (Card.Health <= 0)
             {
                 b.kill(Card);
             }
-            
+
         }
     }
 
@@ -848,33 +851,33 @@ class DataBase
     attack: 6,
     Health: 6,
     id: 38,
-    faction: Faction.Kingdom
-    // taunt: true;
+    faction: Faction.Kingdom,
+    taunt: true
     );
 
-static Unit k5 = new(
-    cost: 2,
-    picture: "pic",
-    name: "Royal Healer",
-    description: "Adrenaline: Heal your leader for 2 HP and give the card to its right HolyGuard.",
-    attack: 1,
-    Health: 3,
-    id: 39,
-    faction: Faction.Kingdom,
-    adrenaline: (b, Card) =>
-    {
-        b.current.health += 2;
-         int temp = b.current.board.IndexOf(Card); 
-         ((Unit)b.current.board[temp+1]).HolyGuard=true;
-    }
-);
+    static Unit k5 = new(
+        cost: 2,
+        picture: "pic",
+        name: "Royal Healer",
+        description: "Adrenaline: Heal you for 2 HP and give the card to its right HolyGuard.",
+        attack: 1,
+        Health: 3,
+        id: 39,
+        faction: Faction.Kingdom,
+        adrenaline: (b, Card) =>
+        {
+            b.current.health += 2;
+            int temp = b.current.board.IndexOf(Card);
+            ((Unit)b.current.board[temp + 1]).HolyGuard = true;
+        }
+    );
 
 
     static Unit k6 = new(
     cost: 3,
     picture: "pic",
     name: "Castle Defender",
-    description: "Adrenaline: Gain +1/+2 if your leader has more HP than the opponent.",
+    description: "Adrenaline: Gain +1/+2 if you has more HP than the opponent.",
     attack: 2,
     Health: 3,
     id: 40,
@@ -890,8 +893,409 @@ static Unit k5 = new(
 );
 
 
+    static Unit k7 = new(
+    cost: 3,
+    picture: "pic",
+    name: "Priest",
+    description: "Adrenaline: heal the aly to your right for 3 health ",
+    attack: 2,
+    Health: 3,
+    id: 41,
+    faction: Faction.Kingdom,
+    adrenaline: (b, Card) =>
+    {
+        int temp = b.current.board.IndexOf(Card);
+        ((Unit)b.current.board[temp + 1]).Health += 2;
+    }
+    );
 
-    
+
+
+    static Unit k8 = new(
+    cost: 3,
+    picture: "pic",
+    name: "Knight Ben Oz",
+    description: "adrenaline: if this card has more attack then the card in front of it, gain holygaurd",
+    attack: 3,
+    Health: 1,
+    id: 42,
+    faction: Faction.Kingdom,
+    adrenaline: (b, Card) =>
+    {
+        int temp = b.current.board.IndexOf(Card);
+        if (Card.attack > ((Unit)b.other.board[temp]).attack)
+        {
+            Card.HolyGuard = true;
+        }
+    }
+    );
+
+
+    static Unit k9 = new(
+    cost: 2,
+    picture: "pic",
+    name: "Knight Ben Berger",
+    description: "Ondeploy: if Knight Ben Oz is in play gain +2 health and give Knight Ben Oz +2 attack ",
+    attack: 1,
+    Health: 3,
+    id: 43,
+    faction: Faction.Kingdom,
+    adrenaline: (b, Card) =>
+    {
+        for (int i = 0; i < b.current.board.Count; i++)
+        {
+            if (((Unit)b.current.board[i]).id == 42)
+            {
+                Card.Health += 2;
+                ((Unit)b.current.board[i]).attack += 2;
+            }
+            {
+            }
+        }
+
+    }
+    );
+
+
+    static Unit k10 = new(
+    cost: 8,
+    picture: "pic",
+    name: "King Of Nazar",
+    description: "OnDeploy: give all of your Knigdom cards holy guard ",
+    attack: 6,
+    Health: 7,
+    id: 44,
+    faction: Faction.Kingdom,
+    onDeploy: (b, Card) =>
+    {
+        for (int i = 0; i < b.current.board.Count; i++)
+        {
+            if (((Unit)b.current.board[i]).faction == Faction.Kingdom)
+            {
+                ((Unit)b.current.board[i]).HolyGuard = true;
+            }
+            {
+            }
+        }
+    }
+    );
+
+
+
+    static Unit e1 = new(
+    cost: 3,
+    picture: "pic",
+    name: "SHEM",
+    description: "Affinity(fire): Give your Fire Elementals EVERYWHERE +1 attack",
+    attack: 2,
+    Health: 2,
+    id: 45,
+    faction: Faction.FireElementals,
+    onDeploy: (b, Card) =>
+    {
+        if (b.current.LastFaction == Faction.FireElementals)
+        {
+            for (int i = 0; i < b.current.board.Count; i++)
+            {
+                if (((Unit)b.current.board[i]).faction == Faction.FireElementals)
+                {
+                    ((Unit)b.current.board[i]).attack++;
+                }
+            }
+
+            for (int i = 0; i < b.current.hand.Count; i++)
+            {
+                if (((Unit)b.current.board[i]).faction == Faction.FireElementals)
+                {
+                    ((Unit)b.current.board[i]).attack++;
+                }
+            }
+
+            for (int i = 0; i < b.current.deck.Count; i++)
+            {
+                if (((Unit)b.current.board[i]).faction == Faction.FireElementals)
+                {
+                    ((Unit)b.current.board[i]).attack++;
+                }
+            }
+
+        }
+    }
+    );
+
+    static Unit e2 = new(
+    cost: 2,
+    picture: "pic",
+    name: "SWIFT",
+    description: "Affinity(air): Draw 2",
+    attack: 2,
+    Health: 2,
+    id: 46,
+    faction: Faction.AirElementals,
+    onDeploy: (b, Card) =>
+    {
+        if (b.current.LastFaction == Faction.AirElementals)
+        {
+            b.current.Draw();
+            b.current.Draw();
+        }
+    }
+    );
+
+
+    static Unit e3 = new(
+    cost: 4,
+    picture: "pic",
+    name: "EDIM",
+    description: "Affinity(fire): give all fire cards on your board +2 attack and all water cards +2 health",
+    attack: 2,
+    Health: 2,
+    id: 47,
+    faction: Faction.WaterElementals,
+    onDeploy: (b, Card) =>
+    {
+        if (b.current.LastFaction == Faction.FireElementals)
+        {
+            for (int i = 0; i < b.current.board.Count; i++)
+            {
+                if (((Unit)b.current.board[i]).faction == Faction.FireElementals)
+                {
+                    ((Unit)b.current.board[i]).attack++;
+                }
+            }
+
+            for (int i = 0; i < b.current.board.Count; i++)
+            {
+                if (((Unit)b.current.board[i]).faction == Faction.WaterElementals)
+                {
+                    ((Unit)b.current.board[i]).Health++;
+                }
+            }
+        }
+    }
+    );
+
+
+    static Unit e4 = new(
+    cost: 3,
+    picture: "pic",
+    name: "ADAM A",
+    description: "Taunt, Affinity(Earth): get +4 health",
+    attack: 3,
+    Health: 4,
+    id: 48,
+    faction: Faction.EarthElementals,
+    taunt: true,
+    onDeploy: (b, Card) =>
+    {
+        if (b.current.LastFaction == Faction.EarthElementals)
+        {
+            Card.Health += 3;
+        }
+    }
+    );
+
+
+
+    static Unit e5 = new(
+    cost: 8,
+    picture: "pic",
+    name: "NAZHARENKO",
+    description: "Adrenaline: Affinity(Fire/ Water/ Air/ Earth): give all Earth cards taunt, give all Fire cards +3 attack, give all Water card +3 health, draw 1 for each Air card  ",
+    attack: 3,
+    Health: 4,
+    id: 49,
+    faction: Faction.Human,
+    adrenaline: (b, Card) =>
+    {
+        if (b.current.LastFaction == Faction.FireElementals || b.current.LastFaction == Faction.EarthElementals || b.current.LastFaction == Faction.WaterElementals || b.current.LastFaction == Faction.AirElementals)
+        {
+            for (int i = 0; i < b.current.board.Count; i++)
+            {
+                if (((Unit)b.current.board[i]).faction == Faction.FireElementals)
+                {
+                    ((Unit)b.current.board[i]).attack += 3;
+                }
+
+                if (((Unit)b.current.board[i]).faction == Faction.WaterElementals)
+                {
+                    ((Unit)b.current.board[i]).Health += 3;
+                }
+                if (((Unit)b.current.board[i]).faction == Faction.EarthElementals)
+                {
+                    ((Unit)b.current.board[i]).taunt = true;
+                }
+
+                if (((Unit)b.current.board[i]).faction == Faction.AirElementals)
+                {
+                    b.Draw();
+                }
+            }
+        }
+    }
+    );
+
+
+    static Unit e6 = new(
+    cost: 2,
+    picture: "pic",
+    name: "FLAME CORE",
+    description: "When the world was born, fire gave it life. Affinity(Fire): add “Spark of Creation” to your hand if you control no other Cores.",
+    attack: 3,
+    Health: 2,
+    id: 50,
+    faction: Faction.FireElementals,
+
+    onDeploy: (b, Card) =>
+    {
+        if (b.current.LastFaction == Faction.FireElementals)
+        {
+            b.current.hand.add(CardFromId(54));
+        }
+    }
+    );
+
+    static Unit e7 = new(
+    cost: 2,
+    picture: "pic",
+    name: "TIDE CORE",
+    description: "Water shaped its form. Affinity(Water): add “Spark of Creation” to your hand if you control no other Cores.",
+    attack: 2,
+    Health: 3,
+    id: 51,
+    faction: Faction.FireElementals,
+
+    onDeploy: (b, Card) =>
+    {
+        if (b.current.LastFaction == Faction.WaterElementals)
+        {
+            b.current.hand.add(CardFromId(54));
+        }
+    }
+    );
+
+
+    static Unit e8 = new(
+    cost: 2,
+    picture: "pic",
+    name: "WIND CORE",
+    description: "Air gave it breath. Affinity(Air): draw one, add “Spark of Creation” to your hand if you control no other Cores.",
+    attack: 2,
+    Health: 2,
+    id: 52,
+    faction: Faction.FireElementals,
+
+    onDeploy: (b, Card) =>
+    {
+        if (b.current.LastFaction == Faction.AirElementals)
+        {
+            b.current.hand.add(CardFromId(54));
+        }
+        b.current.Draw();
+    }
+    );
+
+    static Unit e9 = new(
+    cost: 2,
+    picture: "pic",
+    name: "STONE CORE",
+    description: "Earth gave it strength. Affinity(Earth): draw one, add “Spark of Creation” to your hand if you control no other Cores.",
+    attack: 3,
+    Health: 4,
+    id: 53,
+    faction: Faction.EarthElementals,
+
+    onDeploy: (b, Card) =>
+    {
+        if (b.current.LastFaction == Faction.EarthElementals)
+        {
+            b.current.hand.add(CardFromId(54));
+        }
+    }
+    );
+
+    static Unit e10 = new(
+    cost: 0,
+    picture: "pic",
+    name: "SPARK OF CREATION",
+    description: "A glimmer of the Primordial Balance… Adrenaline: if you control all cores, summon THE Elemental Avatar K.A.R.S.H.E, Primal Equilibrium",
+    attack: 0,
+    Health: 1,
+    id: 54,
+    faction: Faction.EarthElementals,
+
+    adrenlaine: (b, Card) =>
+    {
+        if (b.current.board.Exists(u => u.name == "Flame Core") &&
+        b.current.board.Exists(u => u.name == "Tide Core") &&
+        b.current.board.Exists(u => u.name == "Wind Core") &&
+        b.current.board.Exists(u => u.name == "Stone Core"))
+        {
+            b.current.board.add(CardFromId());
+        }
+    }
+    );
+
+    static Unit e11 = new(
+    cost: 0,
+    picture: "pic",
+    name: "Elemental Avatar KARSHE, Primal Equilibrium",
+    description: "All forces united under one will.",
+    attack: 100,
+    Health: 100,
+    id: 55,
+    faction: Faction.Human,
+    adrenaline: (b, Card) =>
+    {
+        b.other.health = 0;
+    }
+    );
+
+    static Unit b2 = new(
+    cost: 6,
+    picture: "pic",
+    name: "-",
+    description: "Last Words: deal 8 damage randomly to enemies",
+    attack: 2,
+    Health: 6,
+    id: 56,
+    faction: Faction.Beast,
+    lastWords: (b, Card) =>
+        {
+            Random rnd = Random;
+            int temp = 0;
+            if (b.current.board.Contains(Card))
+            {
+                for (int i = 0; i < 8; i++)
+                {
+                    temp = rnd.Next(0, b.E.board.count + 1);
+                    if (temp = b.E.board.count)
+                    {
+                        b.E.health--;
+                    }
+                    else
+                    {
+                        b.P.board[temp].health--;
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 8; i++)
+                {
+                    temp = rnd.Next(0, b.P.board.count + 1);
+                    if (temp = b.P.board.count)
+                    {
+                        b.P.health--;
+                    }
+                    else
+                    {
+                        b.P.board[temp].health--;
+                    }
+                }
+            }
+        }
+        );
 
 
 
@@ -907,7 +1311,29 @@ static Unit k5 = new(
 
 
 
-    static DataBase() // c= unit, i= instaplay, r = robot, u = undead
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    static DataBase() // c= unit, i= instaplay, r = robot, u = undead, k = kingdom
     {
         //INSTAPLAYS:
         lookup.Add(i1.id, i1);
@@ -953,6 +1379,31 @@ static Unit k5 = new(
         lookup.Add(k2.id, k2);
         lookup.Add(k3.id, k3);
         lookup.Add(k4.id, k4);
+        lookup.Add(k5.id, k5);
+        lookup.Add(k6.id, k6);
+        lookup.Add(k7.id, k7);
+        lookup.Add(k8.id, k8);
+        lookup.Add(k9.id, k9);
+        lookup.Add(k10.id, k10);
+        //ELEMENTALS:
+        lookup.Add(e1.id, e1);
+        lookup.Add(e2.id, e2);
+        lookup.Add(e3.id, e3);
+        lookup.Add(e4.id, e4);
+        lookup.Add(e5.id, e5);
+        lookup.Add(e6.id, e6);
+        lookup.Add(e7.id, e7);
+        lookup.Add(e8.id, e8);
+        lookup.Add(e9.id, e9);
+        lookup.Add(e10.id, e10);
+        lookup.Add(e11.id, e11);
+
+
+
+
+
+
+
 
 
 

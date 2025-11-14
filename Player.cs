@@ -13,6 +13,10 @@ class Player
     public int energy;
     public int maxenergy;
     public int health;
+    public Faction? LastFaction;
+
+    
+
     // public List<Artifact> artifacts;
 
 
@@ -22,13 +26,14 @@ class Player
         hand = [];
         deck = [];
         board = [];
-        maxboardsize= 6;
+        MaxBoardSize = 6;
         MaxHandSize = 11;
         StartingHand = 3;
         energy = 0;
         maxenergy = 0;
         health = 20;
-        maxEnergy = 10;
+        MaxEnergy = 10;
+        LastFaction =  null;
     }
 
 }

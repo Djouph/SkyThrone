@@ -1,5 +1,12 @@
 using System.Security.Cryptography.X509Certificates;
 
+class Enemy : Player
+{
+    public Enemy() : base(null)
+    {
+    }
+}
+
 class Player
 {
     public List<int> build;
@@ -15,7 +22,7 @@ class Player
     public int health;
     public Faction? LastFaction;
 
-    
+
 
     // public List<Artifact> artifacts;
 
@@ -33,7 +40,7 @@ class Player
         maxenergy = 0;
         health = 20;
         MaxEnergy = 10;
-        LastFaction =  null;
+        LastFaction = null;
     }
 
 }

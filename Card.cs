@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 abstract class Card
 {
     public string picture;
@@ -14,8 +16,6 @@ abstract class Card
     }
 
     public abstract Card Clone();
-
-
 }
 
 class Unit : Card
@@ -107,6 +107,17 @@ class Unit : Card
     public override Card Clone()
     {
         return new Unit(cost, picture, name, description, attack, Health, faction, id, taunt, HolyGuard, lastWords, takeDamage, adrenaline, onDeploy);
+    }
+
+    public override string ToString()
+    {
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,      // pretty JSON
+            IncludeFields = true       // include public fields like attack, cost, etc.
+        };
+
+        return JsonSerializer.Serialize(this, options);
     }
 }
 

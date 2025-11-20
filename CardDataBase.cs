@@ -30,7 +30,7 @@ class DataBase
 
 
     ///small animals turorial (ids 3-12):
-    static Unit b1 = new(
+    static Unit FB1 = new(
         cost: 3,
         picture: "pic",
         name: "Blast Charger",
@@ -45,7 +45,7 @@ class DataBase
         });
 
 
-    static InstaPlay i1 = new(
+    static InstaPlay t1 = new(
     picture: "pic",
     name: "doom charge",
     description: "when drawn destroy a card in your board, hand and deck",
@@ -233,7 +233,7 @@ class DataBase
         cost: 3,
         picture: "pic",
         name: "Capybara",
-        description: "",
+        description: "onDeploy: +1 health for each other unit you have on the board",
         attack: 3,
         Health: 3,
         id: 12,
@@ -735,8 +735,8 @@ class DataBase
     static Unit u12 = new(
     cost: 6,
     picture: "pic",
-    name: "Dying Lich King",
-    description: "Last Words: Summon Dieing Lich King and deal deal 1 damage to all enemies",
+    name: "Dieing Lich King",
+    description: "Last Words: Deal 1 damage to all enemies",
     attack: 5,
     Health: 4,
     id: 34,
@@ -780,7 +780,7 @@ class DataBase
     cost: 3,
     picture: "pic",
     name: "Dark Knight",
-    description: "HolyGuard, last words: resummon this card",
+    description: "HolyGuard, last words: resummon this card once",
     attack: 3,
     Health: 3,
     id: 36,
@@ -791,14 +791,26 @@ class DataBase
         if (b.current.board.Contains(Card))
         {
             int temp = b.current.board.IndexOf(Card);
-            b.current.board[temp] = CardFromId(36);
+            b.current.board[temp] = CardFromId(57);
         }
         else
         {
             int temp = b.other.board.IndexOf(Card);
-            b.other.board[temp] = CardFromId(36);
+            b.other.board[temp] = CardFromId(57);
         }
     }
+    );
+
+    static Unit t3 = new(
+    cost: 3,
+    picture: "pic",
+    name: "Dark Knight resummoned",
+    description: "HolyGuard, last words: resummon this card once",
+    attack: 3,
+    Health: 3,
+    id: 57,
+    faction: Faction.Kingdom,
+    HolyGuard: true
     );
 
 
@@ -843,7 +855,7 @@ class DataBase
     );
 
 
-    static Unit k4 = new(
+    static Unit t2 = new(
     cost: 6,
     picture: "pic",
     name: "Guardian",
@@ -855,7 +867,7 @@ class DataBase
     taunt: true
     );
 
-    static Unit k5 = new(
+    static Unit k4 = new(
         cost: 2,
         picture: "pic",
         name: "Royal Healer",
@@ -873,7 +885,7 @@ class DataBase
     );
 
 
-    static Unit k6 = new(
+    static Unit k5 = new(
     cost: 3,
     picture: "pic",
     name: "Castle Defender",
@@ -893,7 +905,7 @@ class DataBase
 );
 
 
-    static Unit k7 = new(
+    static Unit k6 = new(
     cost: 3,
     picture: "pic",
     name: "Priest",
@@ -911,7 +923,7 @@ class DataBase
 
 
 
-    static Unit k8 = new(
+    static Unit k7 = new(
     cost: 3,
     picture: "pic",
     name: "Knight Ben Oz",
@@ -931,7 +943,7 @@ class DataBase
     );
 
 
-    static Unit k9 = new(
+    static Unit k8 = new(
     cost: 2,
     picture: "pic",
     name: "Knight Ben Berger",
@@ -957,7 +969,7 @@ class DataBase
     );
 
 
-    static Unit k10 = new(
+    static Unit k9 = new(
     cost: 8,
     picture: "pic",
     name: "King Of Nazar",
@@ -1036,8 +1048,8 @@ class DataBase
     {
         if (b.current.LastFaction == Faction.AirElementals)
         {
-            b.current.Draw();
-            b.current.Draw();
+            b.Draw();
+            b.Draw();
         }
     }
     );
@@ -1137,7 +1149,7 @@ class DataBase
 
 
     static Unit e6 = new(
-    cost: 2,
+    cost: 3,
     picture: "pic",
     name: "FLAME CORE",
     description: "When the world was born, fire gave it life. Affinity(Fire): add “Spark of Creation” to your hand if you control no other Cores.",
@@ -1150,13 +1162,13 @@ class DataBase
     {
         if (b.current.LastFaction == Faction.FireElementals)
         {
-            b.current.hand.add(CardFromId(54));
+            b.current.hand.Add(CardFromId(54));
         }
     }
     );
 
     static Unit e7 = new(
-    cost: 2,
+    cost: 3,
     picture: "pic",
     name: "TIDE CORE",
     description: "Water shaped its form. Affinity(Water): add “Spark of Creation” to your hand if you control no other Cores.",
@@ -1169,14 +1181,14 @@ class DataBase
     {
         if (b.current.LastFaction == Faction.WaterElementals)
         {
-            b.current.hand.add(CardFromId(54));
+            b.current.hand.Add(CardFromId(54));
         }
     }
     );
 
 
     static Unit e8 = new(
-    cost: 2,
+    cost: 3,
     picture: "pic",
     name: "WIND CORE",
     description: "Air gave it breath. Affinity(Air): draw one, add “Spark of Creation” to your hand if you control no other Cores.",
@@ -1189,14 +1201,14 @@ class DataBase
     {
         if (b.current.LastFaction == Faction.AirElementals)
         {
-            b.current.hand.add(CardFromId(54));
+            b.current.hand.Add(CardFromId(54));
         }
-        b.current.Draw();
+        b.Draw();
     }
     );
 
     static Unit e9 = new(
-    cost: 2,
+    cost: 3,
     picture: "pic",
     name: "STONE CORE",
     description: "Earth gave it strength. Affinity(Earth): draw one, add “Spark of Creation” to your hand if you control no other Cores.",
@@ -1209,7 +1221,7 @@ class DataBase
     {
         if (b.current.LastFaction == Faction.EarthElementals)
         {
-            b.current.hand.add(CardFromId(54));
+            b.current.hand.Add(CardFromId(54));
         }
     }
     );
@@ -1218,31 +1230,31 @@ class DataBase
     cost: 0,
     picture: "pic",
     name: "SPARK OF CREATION",
-    description: "A glimmer of the Primordial Balance… Adrenaline: if you control all cores, summon THE Elemental Avatar K.A.R.S.H.E, Primal Equilibrium",
+    description: "A glimmer of the Primordial Balance… Adrenaline: if you control all cores, add THE Elemental Avatar KARSHE, Primal Equilibrium to your hand",
     attack: 0,
     Health: 1,
     id: 54,
     faction: Faction.EarthElementals,
 
-    adrenlaine: (b, Card) =>
+    adrenaline: (b, Card) =>
     {
         if (b.current.board.Exists(u => u.name == "Flame Core") &&
         b.current.board.Exists(u => u.name == "Tide Core") &&
         b.current.board.Exists(u => u.name == "Wind Core") &&
         b.current.board.Exists(u => u.name == "Stone Core"))
         {
-            b.current.board.add(CardFromId());
+            b.current.hand.Add(CardFromId(55));
         }
     }
     );
 
     static Unit e11 = new(
-    cost: 0,
+    cost: 10,
     picture: "pic",
     name: "Elemental Avatar KARSHE, Primal Equilibrium",
     description: "All forces united under one will.",
-    attack: 100,
-    Health: 100,
+    attack: 20,
+    Health: 20,
     id: 55,
     faction: Faction.Human,
     adrenaline: (b, Card) =>
@@ -1251,31 +1263,32 @@ class DataBase
     }
     );
 
-    static Unit b2 = new(
+    static Unit FB2 = new(
     cost: 6,
     picture: "pic",
-    name: "-",
-    description: "Last Words: deal 8 damage randomly to enemies",
+    name: "Muhamd",
+    description: "Taunt, Last Words: deal 8 damage randomly to enemies",
     attack: 2,
     Health: 6,
     id: 56,
+    taunt: true,
     faction: Faction.Beast,
     lastWords: (b, Card) =>
         {
-            Random rnd = Random;
+            Random rnd = new Random();
             int temp = 0;
             if (b.current.board.Contains(Card))
             {
                 for (int i = 0; i < 8; i++)
                 {
-                    temp = rnd.Next(0, b.E.board.count + 1);
-                    if (temp = b.E.board.count)
+                    temp = rnd.Next(0, b.e.board.Count + 1);
+                    if (temp == b.e.board.Count)
                     {
-                        b.E.health--;
+                        b.e.health--;
                     }
                     else
                     {
-                        b.P.board[temp].health--;
+                        ((Unit)b.e.board[temp]).Health--;
                     }
                 }
             }
@@ -1283,14 +1296,14 @@ class DataBase
             {
                 for (int i = 0; i < 8; i++)
                 {
-                    temp = rnd.Next(0, b.P.board.count + 1);
-                    if (temp = b.P.board.count)
+                    temp = rnd.Next(0, b.p.board.Count + 1);
+                    if (temp == b.p.board.Count)
                     {
-                        b.P.health--;
+                        b.p.health--;
                     }
                     else
                     {
-                        b.P.board[temp].health--;
+                        ((Unit)b.p.board[temp]).Health--;
                     }
                 }
             }
@@ -1333,12 +1346,22 @@ class DataBase
 
 
 
-    static DataBase() // c= unit, i= instaplay, r = robot, u = undead, k = kingdom
+
+
+
+
+
+    static DataBase() 
     {
-        //INSTAPLAYS:
-        lookup.Add(i1.id, i1);
-        //BEASTS:
-        lookup.Add(b1.id, b1);
+        //Tokens:
+        lookup.Add(t1.id, t1);
+        lookup.Add(t2.id, t1);
+        lookup.Add(t3.id, t3);
+
+        //FinalBoss:
+        lookup.Add(FB1.id, FB1);
+        lookup.Add(FB2.id, FB2);
+
         //SMALL ANIMALS:
         lookup.Add(a1.id, a1);
         lookup.Add(a2.id, a2);
@@ -1384,7 +1407,6 @@ class DataBase
         lookup.Add(k7.id, k7);
         lookup.Add(k8.id, k8);
         lookup.Add(k9.id, k9);
-        lookup.Add(k10.id, k10);
         //ELEMENTALS:
         lookup.Add(e1.id, e1);
         lookup.Add(e2.id, e2);
@@ -1397,17 +1419,7 @@ class DataBase
         lookup.Add(e9.id, e9);
         lookup.Add(e10.id, e10);
         lookup.Add(e11.id, e11);
-
-
-
-
-
-
-
-
-
-
-
+    
     }
 
 

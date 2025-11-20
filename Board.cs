@@ -5,10 +5,22 @@ class Program
 {
     static void Main()
     {
-        Player p = new Player(new() { 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,});
-        Player e = new Player(new() { 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52,});
+        Player p = new Player(new() { 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, });
+        Player e = new Player(new() { 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, });
         Board board = new Board(p, e);
         board.GameStart();
+
+        string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        string path = Path.Combine(desktop, "test.txt");
+
+        using (StreamWriter writer = new StreamWriter(path, append: true))
+        {
+            for (int i = 1; i < 56; i++)
+            {
+                writer.WriteLine(DataBase.CardFromId(i).ToString() + ",");
+            }
+        }
+
 
         while (board.p.health != 0 || board.e.health != 0)
         {
@@ -240,7 +252,7 @@ class Board
                 {
                     current.LastFaction = ((Unit)current.hand[cardplay]).faction;
                     Play((Unit)current.hand[cardplay]);
-                    
+
                 }
                 else if (char.Parse(Console.ReadLine()!) == 'v')
                 {
@@ -361,7 +373,7 @@ class Board
 
     public void EndPhase()
     {
-        if (p.board.Count != 0)
+        if (p.board.Count != 0 && e.board.Count==0)
         {
             for (int i = 0; i < p.board.Count(); i++)
             {
@@ -370,7 +382,7 @@ class Board
             }
         }
 
-        else if (e.board.Count != 0)
+        else if (e.board.Count != 0 && p.board.Count==0)
         {
             for (int i = 0; i < e.board.Count(); i++)
             {

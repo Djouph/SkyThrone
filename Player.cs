@@ -1,13 +1,6 @@
 using System.Security.Cryptography.X509Certificates;
 
-class Enemy : Player
-{
-    public Enemy() : base(null)
-    {
-    }
-}
-
-class Player
+abstract class PlayableUser
 {
     public List<int> build;
     public List<Card> hand;
@@ -22,12 +15,7 @@ class Player
     public int health;
     public Faction? LastFaction;
 
-
-
-    // public List<Artifact> artifacts;
-
-
-    public Player(List<int> build)
+    public PlayableUser(List<int> build)
     {
         this.build = build;
         hand = [];
@@ -43,4 +31,33 @@ class Player
         LastFaction = null;
     }
 
+    public abstract void Prepere();
+}
+
+class Enemy : PlayableUser
+{
+    public Enemy(List<int> build) : base(build)
+    {
+
+    }
+
+    public override void Prepere()
+    {
+        throw new NotImplementedException();
+    }
+}
+
+class Player : PlayableUser
+{
+    // public List<Artifact> artifacts;
+
+    public Player(List<int> build) : base(build)
+    {
+
+    }
+
+    public override void Prepere()
+    {
+        throw new NotImplementedException();
+    }
 }

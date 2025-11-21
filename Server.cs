@@ -69,7 +69,7 @@ public class TcpServer
                     // Echo back the data
                     OkJoin okJoin = new OkJoin()
                     {
-                        e = new Enemy()
+                        e = new Enemy(request.build)
                     };
 
                     var options = new JsonSerializerOptions
@@ -86,7 +86,7 @@ public class TcpServer
                 else
                 {
                     Player p = new Player(request.build);
-                    Enemy e = new Enemy();
+                    Enemy e = new Enemy(request.build);
                     Board board = new Board(p, e);
 
                     // TODO : SIMULATE ENEMY PREPERATION (GEMINI API)
@@ -142,7 +142,7 @@ class RFB // Ready for battle
 /// <summary>
 /// Src card index attack the dest index
 /// </summary>
-class AttackData
+public class AttackData
 {
     public int src;
     public int dest;

@@ -7,6 +7,7 @@ class Program
     {
         Player p = new Player(new() { 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, });
         Player e = new Player(new() { 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, });
+        Enemy ToturialEnemy = new Enemy(new() {});
         Board board = new Board(p, e);
         board.GameStart();
 
@@ -280,8 +281,10 @@ class Board
         }
     }
 
-    public void BattlePhase()
+    public List<AttackData> BattlePhase()
     {
+        List<AttackData> attackdata = new();
+
         Unit? FindTaunt(Player p)
         {
             for (int i = 0; i < p.board.Count; i++)
@@ -322,6 +325,10 @@ class Board
             {
                 Console.WriteLine($"{currentUnit.name} is attacking taunting {enemyTaunt.name}");
                 deadIndex = enemy.board.IndexOf(enemyTaunt);
+                AttackData temp = new AttackData();
+                temp.src = attackerIndex;
+                temp.dest = deadIndex;
+                attackdata.Add(temp);
                 enemyDied = enemyTaunt.TakeDamage(currentUnit.attack, this);
             }
             else
@@ -337,6 +344,10 @@ class Board
 
                 Unit? enemyCard = (Unit)enemy.board[position];
                 Console.WriteLine($"{currentUnit.name} is attacking {enemyCard.name}");
+                AttackData temp = new AttackData();
+                temp.src = attackerIndex;
+                temp.dest = position;
+                attackdata.Add(temp);
                 enemyDied = enemyCard.TakeDamage(currentUnit.attack, this);
                 deadIndex = position;
             }
@@ -351,7 +362,6 @@ class Board
 
         int shortIndex = 0;
         int longIndex = 0;
-
         ActivateAdrenaline(p);
         ActivateAdrenaline(e);
 
@@ -367,13 +377,15 @@ class Board
 
         current = p;
         other = e;
+
+        return attackdata;
     }
 
 
 
     public void EndPhase()
     {
-        if (p.board.Count != 0 && e.board.Count==0)
+        if (p.board.Count != 0 && e.board.Count == 0)
         {
             for (int i = 0; i < p.board.Count(); i++)
             {
@@ -382,7 +394,7 @@ class Board
             }
         }
 
-        else if (e.board.Count != 0 && p.board.Count==0)
+        else if (e.board.Count != 0 && p.board.Count == 0)
         {
             for (int i = 0; i < e.board.Count(); i++)
             {

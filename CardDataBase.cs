@@ -9,7 +9,6 @@ class DataBase
 
     // static Unit - = new(
     //     cost: -,
-    //     picture: "-",
     //     name: "-",
     //     description: "-",
     //     attack: -,
@@ -19,7 +18,6 @@ class DataBase
     //     );
 
     // static InstaPlay - = new(
-    // picture: "-",
     // name: "-",
     // description: "-",
     // id: -,
@@ -28,58 +26,17 @@ class DataBase
 
     // });
 
-
-    ///small animals turorial (ids 3-12):
-    static Unit FB1 = new(
-        cost: 3,
-        picture: "pic",
-        name: "Blast Charger",
-        description: "OnDeploy: place an Instaplay card in the enemy's deck called doom charge",
-        attack: 2,
-        Health: 2,
-        id: 1,
-        faction: Faction.Beast,
-        onDeploy: (b, card) =>
-        {
-            b.Infeltrait(2);
-        });
-
-
-    static InstaPlay t1 = new(
-    picture: "pic",
-    name: "doom charge",
-    description: "when drawn destroy a card in your board, hand and deck",
-    id: 2,
-    onDraw: (b) =>
-    {
-        Console.WriteLine("doom charge explodes");
-        int place = 0;
-        Random rnd = new Random();
-        if (b.current.board.Count != 0)
-        {
-            place = rnd.Next(0, b.current.board.Count);
-            Console.WriteLine("The exposion kills " + b.current.board[place].name);
-            b.kill((Unit)b.current.board[place]);
-        }
-        if (b.current.deck.Count != 0)
-        {
-            place = rnd.Next(0, b.current.deck.Count);
-            Console.WriteLine("The exposion destorys card number " + place + " in your deck");
-            b.current.deck.RemoveAt(place);
-        }
-        place = rnd.Next(0, b.current.hand.Count);
-        Console.WriteLine("The exposion destroys card number " + place + " in your hand");
-        b.current.hand.RemoveAt(place);
-    });
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    //                                                                     Beasts
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     static Unit a1 = new(
-    cost: 1,
-    picture: "pic",
+    cost: 0,
     name: "Carrier Hedgehog",
     description: "OnDeploy: draw a card",
     attack: 1,
     Health: 2,
-    id: 3,
+    id: 10,
     faction: Faction.Small,
     onDeploy: (b, card) =>
     {
@@ -90,12 +47,11 @@ class DataBase
     static Unit a2 = new(
 
        cost: 1,
-       picture: "pic",
        name: "Evil Hedghog",
        description: "Adrenaline: get +1 attack",
        attack: 1,
        Health: 2,
-       id: 4,
+       id: 1,
        faction: Faction.Small,
        adrenaline: (b, card) =>
        {
@@ -106,24 +62,22 @@ class DataBase
     static Unit a3 = new(
 
        cost: 1,
-       picture: "pic",
        name: "Squirrel Scout",
        description: "no nut, no mercy!",
        attack: 1,
        Health: 1,
-       id: 5,
+       id: 2,
        faction: Faction.Small
        );
 
     static Unit a4 = new(
 
        cost: 3,
-       picture: "pic",
        name: "Owl Watcher",
        description: "opposing enemy has -1 attack",
        attack: 2,
        Health: 3,
-       id: 6,
+       id: 3,
        faction: Faction.Small,
        adrenaline: (b, card) =>
         {
@@ -138,12 +92,11 @@ class DataBase
     static Unit a5 = new(
 
        cost: 3,
-       picture: "pic",
        name: "Ssssnake",
        description: "ssssss im a sssssnake",
        attack: 4,
        Health: 3,
-       id: 7,
+       id: 4,
        faction: Faction.Small
        );
 
@@ -151,12 +104,11 @@ class DataBase
     static Unit a6 = new(
 
        cost: 6,
-       picture: "pic",
        name: "Elephant",
        description: "Adrenaline: give another ally +1/+1",
        attack: 1,
        Health: 6,
-       id: 8,
+       id: 5,
        faction: Faction.Small,
        adrenaline: (b, card) =>
     {
@@ -174,12 +126,11 @@ class DataBase
     static Unit a7 = new(
 
        cost: 3,
-       picture: "pic",
        name: "Turtle Hatchling",
        description: "Adrenaline: +1 health",
        attack: 2,
        Health: 2,
-       id: 9,
+       id: 6,
        faction: Faction.Small,
        adrenaline: (b, card) =>
        {
@@ -191,12 +142,11 @@ class DataBase
     static Unit a8 = new(
 
        cost: 5,
-       picture: "pic",
        name: "LION",
        description: "OnDeploy: gain 1 attack for each other card you have on the board",
        attack: 5,
        Health: 5,
-       id: 10,
+       id: 7,
        faction: Faction.Small,
        onDeploy: (b, card) =>
        {
@@ -210,13 +160,13 @@ class DataBase
        );
 
     static Unit a9 = new(
+
         cost: 2,
-        picture: "pic",
         name: "macaque",
         description: "OnDeploy: give +1 max energy",
         attack: 1,
         Health: 1,
-        id: 11,
+        id: 8,
         faction: Faction.Small,
         onDeploy: (b, card) =>
         {
@@ -231,12 +181,11 @@ class DataBase
 
     static Unit a10 = new(
         cost: 3,
-        picture: "pic",
         name: "Capybara",
         description: "onDeploy: +1 health for each other unit you have on the board",
         attack: 3,
         Health: 3,
-        id: 12,
+        id: 9,
         faction: Faction.Small,
         onDeploy: (b, card) =>
         {
@@ -250,15 +199,17 @@ class DataBase
         }
         );
 
-    /// robots (ids 13-22):
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    //                                                                     Robots
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
     static Unit r1 = new(
         cost: 2,
-        picture: "pic",
         name: "ROBOT I",
         description: "OnDeploy: merge with another robot, if unsuccesful, kill this card",
         attack: 3,
         Health: 3,
-        id: 13,
+        id: 100,
         faction: Faction.Robot,
         onDeploy: (b, card) =>
         {
@@ -280,39 +231,36 @@ class DataBase
 
     static Unit r2 = new(
         cost: 1,
-        picture: "pic",
         name: "ROBOT II",
         description: "just merge with me",
         attack: 1,
         Health: 2,
-        id: 14,
+        id: 101,
         faction: Faction.Robot
         );
 
     static Unit r3 = new(
        cost: 3,
-       picture: "pic",
        name: "The Builder",
        description: "OnDeploy: add ROBOT I and ROBOT II to your hand",
        attack: 1,
        Health: 2,
-       id: 15,
+       id: 102,
        faction: Faction.Human,
        onDeploy: (b, Card) =>
        {
-           b.current.hand.Add(CardFromId(13));
-           b.current.hand.Add(CardFromId(14));
+           b.current.hand.Add(CardFromId(100));
+           b.current.hand.Add(CardFromId(101));
        }
        );
 
     static Unit r4 = new(
        cost: 2,
-       picture: "pic",
        name: "UPgrader",
        description: "Adrenaline: give your first robot +1/+1",
        attack: 2,
        Health: 2,
-       id: 16,
+       id: 103,
        faction: Faction.Robot,
         adrenaline: (b, Card) =>
        {
@@ -331,12 +279,11 @@ class DataBase
 
     static Unit r5 = new(
        cost: 6,
-       picture: "pic",
        name: "OMEGA TITAN IV",
        description: "OnDeploy: merge all robots to this card, get +2/+2 for each card merged into this",
        attack: 5,
        Health: 6,
-       id: 17,
+       id: 104,
        faction: Faction.Robot,
         onDeploy: (b, Card) =>
         {
@@ -356,12 +303,11 @@ class DataBase
 
     static Unit r6 = new(
        cost: 4,
-       picture: "pic",
        name: "DOBLERBOT",
        description: "Adrenaline: double this card's power",
        attack: 1,
        Health: 1,
-       id: 18,
+       id: 105,
        faction: Faction.Robot,
         adrenaline: (b, Card) =>
        {
@@ -371,12 +317,11 @@ class DataBase
 
     static Unit r7 = new(
        cost: 2,
-       picture: "pic",
        name: "ROB THE ROBOT",
        description: "Adrenaline: if you have another roobot, deal 1 damage to each enemy unit",
        attack: 2,
        Health: 2,
-       id: 19,
+       id: 106,
        faction: Faction.Robot,
         adrenaline: (b, Card) =>
        {
@@ -401,12 +346,11 @@ class DataBase
 
     static Unit r8 = new(
        cost: 1,
-       picture: "pic",
        name: "Magneticast",
        description: "OnDeploy: if you control a robot, draw a card from your deck that costs 5 or more",
        attack: 1,
        Health: 2,
-       id: 20,
+       id: 107,
        faction: Faction.Robot,
         onDeploy: (b, Card) =>
        {
@@ -435,12 +379,11 @@ class DataBase
 
     static Unit r9 = new(
        cost: 2,
-       picture: "pic",
        name: "D.N.A.E.C.O.A.H.C",
        description: "reduce the cost of robots in your hand by 1",
        attack: 1,
        Health: 2,
-       id: 21,
+       id: 108,
        faction: Faction.Robot,
         onDeploy: (b, Card) =>
        {
@@ -456,12 +399,11 @@ class DataBase
 
     static Unit r10 = new(
        cost: 4,
-       picture: "pic",
        name: "Repair Bot",
        description: "Adrenaline: Repairs it self to 4 health",
        attack: 3,
        Health: 4,
-       id: 22,
+       id: 109,
        faction: Faction.Robot,
        adrenaline: (b, Card) =>
        {
@@ -472,53 +414,50 @@ class DataBase
        }
     );
 
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    //                                                                     Undead
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
-
-    // undead ids => 23-34
     static Unit u1 = new(
         cost: 1,
-        picture: "pic",
         name: "Ghoul Grunt",
         description: "Last Words: summon 1,1 Skeleton Grunt",
         attack: 1,
         Health: 1,
-        id: 23,
+        id: 200,
         faction: Faction.Undead,
         lastWords: (b, Card) =>
         {
             if (b.current.board.Contains(Card))
             {
                 int temp = b.current.board.IndexOf(Card);
-                b.current.board[temp] = CardFromId(24);
+                b.current.board[temp] = CardFromId(701);
             }
             else
             {
                 int temp = b.other.board.IndexOf(Card);
-                b.other.board[temp] = CardFromId(24);
+                b.other.board[temp] = CardFromId(701);
             }
         }
         );
 
-    static Unit u2 = new(
+    static Unit t4 = new(
         cost: 1,
-        picture: "pic",
         name: "Skeleton Grunt",
         description: "Grrrrr...",
         attack: 1,
         Health: 1,
-        id: 24,
+        id: 701,
         faction: Faction.Undead
         );
 
-    static Unit u3 = new(
+    static Unit u2 = new(
         cost: 2,
-        picture: "pic",
         name: "Ghoulling",
         description: "Last Words: give +1 ATK to all allies.",
         attack: 2,
         Health: 1,
-        id: 25,
+        id: 201,
         faction: Faction.Undead,
         lastWords: (b, Card) =>
         {
@@ -539,14 +478,13 @@ class DataBase
         }
         );
 
-    static Unit u4 = new(
+    static Unit u3 = new(
         cost: 2,
-        picture: "pic",
         name: "Bone Guard",
         description: "Last Words: give +1 health to all allies.",
         attack: 1,
         Health: 2,
-        id: 26,
+        id: 202,
         taunt: true,
         faction: Faction.Undead,
         lastWords: (b, Card) =>
@@ -568,14 +506,13 @@ class DataBase
         }
         );
 
-    static Unit u5 = new(
+    static Unit u4 = new(
         cost: 1,
-        picture: "pic",
         name: "Plague Rat",
         description: "Adrenaline: Deal 1 damage to both players.",
         attack: 2,
         Health: 2,
-        id: 27,
+        id: 203,
         faction: Faction.Undead,
         adrenaline: (b, Card) =>
         {
@@ -584,14 +521,13 @@ class DataBase
         }
         );
 
-    static Unit u6 = new(
+    static Unit u5 = new(
         cost: 3,
-        picture: "pic",
         name: "Crypt Archer",
         description: "Adrenaline: Deal 2 damage to a random enemy.",
         attack: 3,
         Health: 1,
-        id: 28,
+        id: 204,
         faction: Faction.Undead,
         adrenaline: (b, Card) =>
         {
@@ -604,14 +540,13 @@ class DataBase
         }
         );
 
-    static Unit u7 = new(
+    static Unit u6 = new(
         cost: 3,
-        picture: "pic",
         name: "Grave Knight",
         description: "Last Words, On Deploy: Draw a Card",
         attack: 2,
         Health: 2,
-        id: 29,
+        id: 205,
         faction: Faction.Undead,
         onDeploy: (b, Card) =>
         {
@@ -623,14 +558,13 @@ class DataBase
         }
         );
 
-    static Unit u8 = new(
+    static Unit u7 = new(
         cost: 3,
-        picture: "pic",
         name: "Rotting Hulk",
         description: "Adrenaline: Gains +1, +1.",
         attack: 4,
         Health: 4,
-        id: 30,
+        id: 206,
         faction: Faction.Undead,
         adrenaline: (b, Card) =>
         {
@@ -639,39 +573,37 @@ class DataBase
         }
         );
 
-    static Unit u9 = new(
+    static Unit u8 = new(
         cost: 5,
-        picture: "pic",
         name: "Necrotic Horror",
         description: "Taunt, Last Words: Summon two 1/1 Ghoul Grunt.",
         attack: 4,
         Health: 3,
-        id: 31,
+        id: 207,
         faction: Faction.Undead,
         taunt: true,
         lastWords: (b, Card) =>
         {
             if (b.current.board.Contains(Card))
             {
-                b.current.board.Add(CardFromId(23));
-                b.current.board.Add(CardFromId(23));
+                b.current.board.Add(CardFromId(200));
+                b.current.board.Add(CardFromId(200));
             }
             else
             {
-                b.other.board.Add(CardFromId(23));
-                b.other.board.Add(CardFromId(23));
+                b.other.board.Add(CardFromId(200));
+                b.other.board.Add(CardFromId(200));
             }
         }
         );
 
-    static Unit u10 = new(
+    static Unit u9 = new(
         cost: 6,
-        picture: "pic",
         name: "Lich King",
         description: "On Deploy: deal 3 damage to the player who played it, Last Words: Summon Wounded Lich King and deal deal 1 damage to all enemies",
         attack: 6,
         Health: 6,
-        id: 32,
+        id: 208,
         faction: Faction.Undead,
         onDeploy: (b, Card) =>
         {
@@ -686,7 +618,7 @@ class DataBase
                     ((Unit)b.other.board[i]).TakeDamage(1, b);
                 }
                 int temp = b.current.board.IndexOf(Card);
-                b.current.board[temp] = CardFromId(33);
+                b.current.board[temp] = CardFromId(702);
             }
             else
             {
@@ -695,19 +627,18 @@ class DataBase
                     ((Unit)b.current.board[i]).TakeDamage(1, b);
                 }
                 int temp = b.other.board.IndexOf(Card);
-                b.other.board[temp] = CardFromId(33);
+                b.other.board[temp] = CardFromId(702);
             }
         }
         );
 
-    static Unit u11 = new(
+    static Unit t5 = new(
     cost: 6,
-    picture: "pic",
     name: "Wounded Lich King",
     description: "Last Words: Summon Dieing Lich King and deal deal 1 damage to all enemies",
     attack: 5,
     Health: 5,
-    id: 33,
+    id: 702,
     faction: Faction.Undead,
     lastWords: (b, Card) =>
     {
@@ -718,7 +649,7 @@ class DataBase
                 ((Unit)b.other.board[i]).TakeDamage(1, b);
             }
             int temp = b.current.board.IndexOf(Card);
-            b.current.board[temp] = CardFromId(34);
+            b.current.board[temp] = CardFromId(703);
         }
         else
         {
@@ -727,19 +658,18 @@ class DataBase
                 ((Unit)b.current.board[i]).TakeDamage(1, b);
             }
             int temp = b.other.board.IndexOf(Card);
-            b.other.board[temp] = CardFromId(34);
+            b.other.board[temp] = CardFromId(703);
         }
     }
     );
 
-    static Unit u12 = new(
+    static Unit t6 = new(
     cost: 6,
-    picture: "pic",
     name: "Dieing Lich King",
     description: "Last Words: Deal 1 damage to all enemies",
     attack: 5,
     Health: 4,
-    id: 34,
+    id: 703,
     faction: Faction.Undead,
     lastWords: (b, Card) =>
     {
@@ -760,17 +690,17 @@ class DataBase
     }
     );
 
-
-    //Kingdom Of Nazar: ids- 35-45
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    //                                                                     Kingdom
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     static Unit k1 = new(
     cost: 1,
-    picture: "pic",
     name: "Trainee Knight",
     description: "HolyGuard",
     attack: 2,
     Health: 1,
-    id: 35,
+    id: 300,
     faction: Faction.Kingdom,
     HolyGuard: true
     );
@@ -778,12 +708,11 @@ class DataBase
 
     static Unit k2 = new(
     cost: 3,
-    picture: "pic",
     name: "Dark Knight",
     description: "HolyGuard, last words: resummon this card once",
     attack: 3,
     Health: 3,
-    id: 36,
+    id: 301,
     faction: Faction.Kingdom,
     HolyGuard: true,
     lastWords: (b, Card) =>
@@ -791,24 +720,23 @@ class DataBase
         if (b.current.board.Contains(Card))
         {
             int temp = b.current.board.IndexOf(Card);
-            b.current.board[temp] = CardFromId(57);
+            b.current.board[temp] = CardFromId(704);
         }
         else
         {
             int temp = b.other.board.IndexOf(Card);
-            b.other.board[temp] = CardFromId(57);
+            b.other.board[temp] = CardFromId(704);
         }
     }
     );
 
     static Unit t3 = new(
     cost: 3,
-    picture: "pic",
     name: "Dark Knight resummoned",
-    description: "HolyGuard, last words: resummon this card once",
+    description: "HolyGuard",
     attack: 3,
     Health: 3,
-    id: 57,
+    id: 704,
     faction: Faction.Kingdom,
     HolyGuard: true
     );
@@ -816,12 +744,11 @@ class DataBase
 
     static Unit k3 = new(
     cost: 4,
-    picture: "pic",
     name: "Prince Of Nazar",
     description: "if this card's health is 3 or less summon Guardian to its right to defend it! (doesn't work if board is full)",
     attack: 1,
     Health: 5,
-    id: 37,
+    id: 302,
     faction: Faction.Kingdom,
     takeDamage: (damage, b, Card) =>
     {
@@ -841,7 +768,7 @@ class DataBase
                     {
                         b.current.board[i] = b.current.board[i + 1];
                     }
-                    b.current.board[temp + 1] = CardFromId(38);
+                    b.current.board[temp + 1] = CardFromId(705);
                 }
             }
             if (Card.Health <= 0)
@@ -857,24 +784,22 @@ class DataBase
 
     static Unit t2 = new(
     cost: 6,
-    picture: "pic",
     name: "Guardian",
     description: "Protect the heir!",
     attack: 6,
     Health: 6,
-    id: 38,
+    id: 705,
     faction: Faction.Kingdom,
     taunt: true
     );
 
     static Unit k4 = new(
         cost: 2,
-        picture: "pic",
         name: "Royal Healer",
         description: "Adrenaline: Heal you for 2 HP and give the card to its right HolyGuard.",
         attack: 1,
         Health: 3,
-        id: 39,
+        id: 303,
         faction: Faction.Kingdom,
         adrenaline: (b, Card) =>
         {
@@ -887,12 +812,11 @@ class DataBase
 
     static Unit k5 = new(
     cost: 3,
-    picture: "pic",
     name: "Castle Defender",
     description: "Adrenaline: Gain +1/+2 if you has more HP than the opponent.",
     attack: 2,
     Health: 3,
-    id: 40,
+    id: 304,
     faction: Faction.Kingdom,
     adrenaline: (b, Card) =>
     {
@@ -907,12 +831,11 @@ class DataBase
 
     static Unit k6 = new(
     cost: 3,
-    picture: "pic",
     name: "Priest",
     description: "Adrenaline: heal the aly to your right for 3 health ",
     attack: 2,
     Health: 3,
-    id: 41,
+    id: 305,
     faction: Faction.Kingdom,
     adrenaline: (b, Card) =>
     {
@@ -925,12 +848,11 @@ class DataBase
 
     static Unit k7 = new(
     cost: 3,
-    picture: "pic",
     name: "Knight Ben Oz",
     description: "adrenaline: if this card has more attack then the card in front of it, gain holygaurd",
     attack: 3,
     Health: 1,
-    id: 42,
+    id: 306,
     faction: Faction.Kingdom,
     adrenaline: (b, Card) =>
     {
@@ -945,12 +867,11 @@ class DataBase
 
     static Unit k8 = new(
     cost: 2,
-    picture: "pic",
     name: "Knight Ben Berger",
     description: "Ondeploy: if Knight Ben Oz is in play gain +2 health and give Knight Ben Oz +2 attack ",
     attack: 1,
     Health: 3,
-    id: 43,
+    id: 307,
     faction: Faction.Kingdom,
     adrenaline: (b, Card) =>
     {
@@ -971,12 +892,11 @@ class DataBase
 
     static Unit k9 = new(
     cost: 8,
-    picture: "pic",
     name: "King Of Nazar",
     description: "OnDeploy: give all of your Knigdom cards holy guard ",
     attack: 6,
     Health: 7,
-    id: 44,
+    id: 308,
     faction: Faction.Kingdom,
     onDeploy: (b, Card) =>
     {
@@ -992,16 +912,17 @@ class DataBase
     }
     );
 
-
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    //                                                                     Elementals
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     static Unit e1 = new(
     cost: 3,
-    picture: "pic",
     name: "SHEM",
     description: "Affinity(fire): Give your Fire Elementals EVERYWHERE +1 attack",
     attack: 2,
     Health: 2,
-    id: 45,
+    id: 400,
     faction: Faction.FireElementals,
     onDeploy: (b, Card) =>
     {
@@ -1037,12 +958,11 @@ class DataBase
 
     static Unit e2 = new(
     cost: 2,
-    picture: "pic",
     name: "SWIFT",
     description: "Affinity(air): Draw 2",
     attack: 2,
     Health: 2,
-    id: 46,
+    id: 401,
     faction: Faction.AirElementals,
     onDeploy: (b, Card) =>
     {
@@ -1057,12 +977,11 @@ class DataBase
 
     static Unit e3 = new(
     cost: 4,
-    picture: "pic",
     name: "EDIM",
     description: "Affinity(fire): give all fire cards on your board +2 attack and all water cards +2 health",
     attack: 2,
     Health: 2,
-    id: 47,
+    id: 402,
     faction: Faction.WaterElementals,
     onDeploy: (b, Card) =>
     {
@@ -1090,12 +1009,11 @@ class DataBase
 
     static Unit e4 = new(
     cost: 3,
-    picture: "pic",
     name: "ADAM A",
     description: "Taunt, Affinity(Earth): get +4 health",
     attack: 3,
     Health: 4,
-    id: 48,
+    id: 403,
     faction: Faction.EarthElementals,
     taunt: true,
     onDeploy: (b, Card) =>
@@ -1111,12 +1029,11 @@ class DataBase
 
     static Unit e5 = new(
     cost: 8,
-    picture: "pic",
     name: "NAZHARENKO",
     description: "Adrenaline: Affinity(Fire/ Water/ Air/ Earth): give all Earth cards taunt, give all Fire cards +3 attack, give all Water card +3 health, draw 1 for each Air card  ",
     attack: 3,
     Health: 4,
-    id: 49,
+    id: 404,
     faction: Faction.Human,
     adrenaline: (b, Card) =>
     {
@@ -1150,12 +1067,11 @@ class DataBase
 
     static Unit e6 = new(
     cost: 3,
-    picture: "pic",
     name: "FLAME CORE",
     description: "When the world was born, fire gave it life. Affinity(Fire): add “Spark of Creation” to your hand if you control no other Cores.",
     attack: 3,
     Health: 2,
-    id: 50,
+    id: 405,
     faction: Faction.FireElementals,
 
     onDeploy: (b, Card) =>
@@ -1169,12 +1085,11 @@ class DataBase
 
     static Unit e7 = new(
     cost: 3,
-    picture: "pic",
     name: "TIDE CORE",
     description: "Water shaped its form. Affinity(Water): add “Spark of Creation” to your hand if you control no other Cores.",
     attack: 2,
     Health: 3,
-    id: 51,
+    id: 406,
     faction: Faction.FireElementals,
 
     onDeploy: (b, Card) =>
@@ -1189,12 +1104,11 @@ class DataBase
 
     static Unit e8 = new(
     cost: 3,
-    picture: "pic",
     name: "WIND CORE",
     description: "Air gave it breath. Affinity(Air): draw one, add “Spark of Creation” to your hand if you control no other Cores.",
     attack: 2,
     Health: 2,
-    id: 52,
+    id: 407,
     faction: Faction.FireElementals,
 
     onDeploy: (b, Card) =>
@@ -1209,12 +1123,11 @@ class DataBase
 
     static Unit e9 = new(
     cost: 3,
-    picture: "pic",
     name: "STONE CORE",
     description: "Earth gave it strength. Affinity(Earth): draw one, add “Spark of Creation” to your hand if you control no other Cores.",
     attack: 3,
     Health: 4,
-    id: 53,
+    id: 408,
     faction: Faction.EarthElementals,
 
     onDeploy: (b, Card) =>
@@ -1228,12 +1141,11 @@ class DataBase
 
     static Unit e10 = new(
     cost: 0,
-    picture: "pic",
     name: "SPARK OF CREATION",
     description: "A glimmer of the Primordial Balance… Adrenaline: if you control all cores, add THE Elemental Avatar KARSHE, Primal Equilibrium to your hand",
     attack: 0,
     Health: 1,
-    id: 54,
+    id: 409,
     faction: Faction.EarthElementals,
 
     adrenaline: (b, Card) =>
@@ -1243,19 +1155,18 @@ class DataBase
         b.current.board.Exists(u => u.name == "Wind Core") &&
         b.current.board.Exists(u => u.name == "Stone Core"))
         {
-            b.current.hand.Add(CardFromId(55));
+            b.current.hand.Add(CardFromId(410));
         }
     }
     );
 
     static Unit e11 = new(
     cost: 10,
-    picture: "pic",
     name: "Elemental Avatar KARSHE, Primal Equilibrium",
     description: "All forces united under one will.",
     attack: 20,
     Health: 20,
-    id: 55,
+    id: 410,
     faction: Faction.Human,
     adrenaline: (b, Card) =>
     {
@@ -1263,14 +1174,155 @@ class DataBase
     }
     );
 
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    //                                                                     Pirates
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // static Unit - = new(
+    //     cost: -,
+    //     name: "-",
+    //     description: "-",
+    //     attack: -,
+    //     Health: -,
+    //     id: -
+    //     faction: Faction.-,
+    //     );
+
+    // static Unit - = new(
+    //     cost: -,
+    //     name: "-",
+    //     description: "-",
+    //     attack: -,
+    //     Health: -,
+    //     id: -
+    //     faction: Faction.-,
+    //     );
+
+    // static Unit - = new(
+    //     cost: -,
+    //     name: "-",
+    //     description: "-",
+    //     attack: -,
+    //     Health: -,
+    //     id: -
+    //     faction: Faction.-,
+    //     );
+
+    // static Unit - = new(
+    //     cost: -,
+    //     name: "-",
+    //     description: "-",
+    //     attack: -,
+    //     Health: -,
+    //     id: -
+    //     faction: Faction.-,
+    //     );
+
+    static Unit p5 = new(
+        cost: 4,
+        name: "Borders capitan",
+        description: "OnDeploy: send 3 Instaplay cards in the enemy's deck called border",
+        attack: 2,
+        Health: 2,
+        id: 500,
+        faction: Faction.Pirate,
+            onDeploy: (Board b, Unit unit) =>
+            {
+                b.Infeltrait(705);
+                b.Infeltrait(705);
+                b.Infeltrait(705);
+            }
+        );
+
+    static InstaPlay t7 = new(
+    name: "border",
+    description: "*BORD!!!*",
+    id: 705,
+    onDraw: (b) =>
+    {
+        if (b.current.board[0] != null)
+        {
+            ((Unit)b.current.board[0]).TakeDamage(2, b);
+        }
+        if (b.other.board.Count < 7)
+        {
+            b.other.board.Add(CardFromId(706));
+        }
+        else
+        {
+            for (int i = 0; i < b.other.board.Count; i++)
+            {
+                if (((Unit)b.other.board[i]).faction == Faction.Pirate)
+                {
+                    ((Unit)b.other.board[i]).Health += 2;
+                    ((Unit)b.other.board[i]).attack += 2;
+                    break;
+                }
+            }
+        }
+    });
+
+    static Unit t8 = new(
+    cost: 0,
+    name: "Border",
+    description: "*Get Them*",
+    attack: 2,
+    Health: 2,
+    id: 706,
+    faction: Faction.Pirate
+    );
+
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    //                                                                     Final Boss
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    static Unit FB1 = new(
+    cost: 3,
+    name: "Blast Charger",
+    description: "OnDeploy: place an Instaplay card in the enemy's deck called doom charge",
+    attack: 2,
+    Health: 2,
+    id: 600,
+    faction: Faction.Beast,
+    onDeploy: (b, card) =>
+    {
+        b.Infeltrait(2);
+    });
+
+
+    static InstaPlay t1 = new(
+    name: "doom charge",
+    description: "when drawn destroy a card in your board, hand and deck",
+    id: 701,
+    onDraw: (b) =>
+    {
+        Console.WriteLine("doom charge explodes");
+        int place = 0;
+        Random rnd = new Random();
+        if (b.current.board.Count != 0)
+        {
+            place = rnd.Next(0, b.current.board.Count);
+            Console.WriteLine("The exposion kills " + b.current.board[place].name);
+            b.kill((Unit)b.current.board[place]);
+        }
+        if (b.current.deck.Count != 0)
+        {
+            place = rnd.Next(0, b.current.deck.Count);
+            Console.WriteLine("The exposion destorys card number " + place + " in your deck");
+            b.current.deck.RemoveAt(place);
+        }
+        place = rnd.Next(0, b.current.hand.Count);
+        Console.WriteLine("The exposion destroys card number " + place + " in your hand");
+        b.current.hand.RemoveAt(place);
+    });
+
     static Unit FB2 = new(
     cost: 6,
-    picture: "pic",
     name: "Muhamd",
     description: "Taunt, Last Words: deal 8 damage randomly to enemies",
     attack: 2,
     Health: 6,
-    id: 56,
+    id: 601,
     taunt: true,
     faction: Faction.Beast,
     lastWords: (b, Card) =>
@@ -1346,18 +1398,24 @@ class DataBase
 
 
 
-
-
-
-
-
-    static DataBase() 
+    // id ranges are: 
+    // Beasts: 0-99
+    // robots: 100-199
+    // undead: 200-299
+    // kingdom: 300-399
+    // Elementals: 400-499
+    // pirates: 500-599
+    // Final Boss: 600-699
+    // tokens: 700+
+    static DataBase()
     {
         //Tokens:
         lookup.Add(t1.id, t1);
         lookup.Add(t2.id, t1);
         lookup.Add(t3.id, t3);
-
+        lookup.Add(t4.id, t4);
+        lookup.Add(t5.id, t5);
+        lookup.Add(t6.id, t6);
         //FinalBoss:
         lookup.Add(FB1.id, FB1);
         lookup.Add(FB2.id, FB2);
@@ -1387,16 +1445,13 @@ class DataBase
         //UNDEAD:
         lookup.Add(u1.id, u1);
         lookup.Add(u2.id, u2);
+        lookup.Add(u2.id, u2);
         lookup.Add(u3.id, u3);
         lookup.Add(u4.id, u4);
-        lookup.Add(u5.id, u5);
         lookup.Add(u6.id, u6);
         lookup.Add(u7.id, u7);
         lookup.Add(u8.id, u8);
         lookup.Add(u9.id, u9);
-        lookup.Add(u10.id, u10);
-        lookup.Add(u11.id, u11);
-        lookup.Add(u12.id, u12);
         //KINGDOM:
         lookup.Add(k1.id, k1);
         lookup.Add(k2.id, k2);
@@ -1419,7 +1474,7 @@ class DataBase
         lookup.Add(e9.id, e9);
         lookup.Add(e10.id, e10);
         lookup.Add(e11.id, e11);
-    
+
     }
 
 

@@ -2,14 +2,12 @@ using System.Text.Json;
 
 abstract class Card
 {
-    public string picture;
     public string name;
     public string description;
     public readonly int id;
 
-    public Card(string picture, string name, string description, int id)
+    public Card(string name, string description, int id)
     {
-        this.picture = picture;
         this.name = name;
         this.description = description;
         this.id = id;
@@ -30,7 +28,7 @@ class Unit : Card
     private Action<Board, Unit> adrenaline;
     private Action<Board, Unit> onDeploy;
     private Action<Board, Unit> lastWords;
-    public Unit(int cost, string picture, string name, string description, int attack, int Health, Faction faction, int id, bool taunt = false, bool HolyGuard = false, Action<Board, Unit> lastWords = null!, Action<int, Board, Unit> takeDamage = null!, Action<Board, Unit> adrenaline = null!, Action<Board, Unit> onDeploy = null!) : base(picture, picture, description, id)
+    public Unit(int cost, string name, string description, int attack, int Health, Faction faction, int id, bool taunt = false, bool HolyGuard = false, Action<Board, Unit> lastWords = null!, Action<int, Board, Unit> takeDamage = null!, Action<Board, Unit> adrenaline = null!, Action<Board, Unit> onDeploy = null!) : base(name, description, id)
     {
         this.faction = faction;
         this.cost = cost;
@@ -106,7 +104,7 @@ class Unit : Card
 
     public override Card Clone()
     {
-        return new Unit(cost, picture, name, description, attack, Health, faction, id, taunt, HolyGuard, lastWords, takeDamage, adrenaline, onDeploy);
+        return new Unit(cost, name, description, attack, Health, faction, id, taunt, HolyGuard, lastWords, takeDamage, adrenaline, onDeploy);
     }
 
     public override string ToString()
@@ -124,14 +122,14 @@ class Unit : Card
 class InstaPlay : Card
 {
     private Action<Board> onDraw;
-    public InstaPlay(string picture, string name, string description, int id, Action<Board> onDraw) : base(picture, name, description, id)
+    public InstaPlay(string name, string description, int id, Action<Board> onDraw) : base(name, description, id)
     {
         this.onDraw = onDraw;
     }
 
     public override Card Clone()
     {
-        return new InstaPlay(picture, name, description, id, onDraw);
+        return new InstaPlay(name, description, id, onDraw);
     }
 
     public virtual void OnDraw(Board board)

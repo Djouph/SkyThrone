@@ -5,9 +5,9 @@ class Program
 {
     static void Main()
     {
-        Player p = new Player(new() { 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, });
-        Player e = new Player(new() { 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, });
-        Enemy ToturialEnemy = new Enemy(new() {});
+        PlayableUser p = new Player(1, new() { 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, });
+        PlayableUser e = new Player(2, new() { 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, });
+        Enemy ToturialEnemy = new Enemy(3, new() { });
         Board board = new Board(p, e);
         board.GameStart();
 
@@ -52,13 +52,13 @@ class Program
 
 class Board
 {
-    public Player p;
-    public Player e;
-    public Player current;
-    public Player other;
+    public PlayableUser p;
+    public PlayableUser e;
+    public PlayableUser current;
+    public PlayableUser other;
     const int StartingHand = 3;
     public bool playerturn;
-    public Board(Player p, Player e)
+    public Board(PlayableUser p, PlayableUser e)
     {
         this.p = p;
         this.e = e;
@@ -285,7 +285,7 @@ class Board
     {
         List<AttackData> attackdata = new();
 
-        Unit? FindTaunt(Player p)
+        Unit? FindTaunt(PlayableUser p)
         {
             for (int i = 0; i < p.board.Count; i++)
             {
@@ -295,11 +295,11 @@ class Board
             return null;
         }
 
-        void ActivateAdrenaline(Player p)
+        void ActivateAdrenaline(PlayableUser p)
         {
             if (current != p)
             {
-                Player temp = current;
+                PlayableUser temp = current;
                 current = p;
                 other = temp;
             }
@@ -311,7 +311,7 @@ class Board
             }
         }
 
-        void DoAttack(Player attacker, Player enemy, ref int attackerIndex, ref int enemyIndex)
+        void DoAttack(PlayableUser attacker, PlayableUser enemy, ref int attackerIndex, ref int enemyIndex)
         {
             if (attackerIndex >= attacker.board.Count) return;
 
@@ -328,6 +328,7 @@ class Board
                 AttackData temp = new AttackData();
                 temp.src = attackerIndex;
                 temp.dest = deadIndex;
+                temp.attackerplayerId = attacker.playerId;
                 attackdata.Add(temp);
                 enemyDied = enemyTaunt.TakeDamage(currentUnit.attack, this);
             }
@@ -347,6 +348,7 @@ class Board
                 AttackData temp = new AttackData();
                 temp.src = attackerIndex;
                 temp.dest = position;
+                temp.attackerplayerId = attacker.playerId;
                 attackdata.Add(temp);
                 enemyDied = enemyCard.TakeDamage(currentUnit.attack, this);
                 deadIndex = position;
@@ -365,7 +367,7 @@ class Board
         ActivateAdrenaline(p);
         ActivateAdrenaline(e);
 
-        Player shortest, longest;
+        PlayableUser shortest, longest;
         if (p.board.Count <= e.board.Count) (shortest, longest) = (p, e);
         else (shortest, longest) = (e, p);
 
@@ -383,14 +385,20 @@ class Board
 
 
 
-    public void EndPhase()
+    public List<AttackData> EndPhase()
     {
+        List<AttackData> attackData = new();
         if (p.board.Count != 0 && e.board.Count == 0)
         {
             for (int i = 0; i < p.board.Count(); i++)
             {
                 Console.WriteLine(p.board[i].name + " attacked the enemy for " + ((Unit)p.board[i]).Attack() + " damage");
                 e.health -= ((Unit)p.board[i]).Attack();
+                AttackData temp = new();
+                temp.src = p.board[i].id;
+                temp.dest = 10000;
+                temp.attackerplayerId = p.playerId;
+                attackData.Add(temp);
             }
         }
 
@@ -400,12 +408,17 @@ class Board
             {
                 Console.WriteLine(e.board[i].name + " attacked the player for " + ((Unit)e.board[i]).Attack() + " damage");
                 p.health -= ((Unit)e.board[i]).Attack();
+                AttackData temp = new();
+                temp.src = e.board[i].id;
+                temp.dest = 20000;
+                temp.attackerplayerId = e.playerId;
+                attackData.Add(temp);
             }
         }
 
         Console.WriteLine("player health: " + p.health);
         Console.WriteLine("enemy health: " + e.health);
-
+        return attackData;
     }
 
 }

@@ -12,7 +12,7 @@ enum Faction
 
    AirElementals,
 
-   EarthElementals
+   EarthElementals,
 
-
+    Pirate
 }

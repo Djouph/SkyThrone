@@ -51,6 +51,9 @@ public class TcpServer
         int bytesRead;
 
         JoinRequest? request = null;
+        Player? p = null;
+        Enemy? e = null;
+        Board? game = null;
 
         try
         {
@@ -66,10 +69,18 @@ public class TcpServer
 
                     // TODO : CHECK IF THE PLAYER CAN PLAY THE SELECTED LEVEL
 
+                    const int playerId = 20000;
+                    const int enemeyId = 10000;
+
+                    p = new Player(playerId, request.build);
+                    e = new Enemy(enemeyId, request.build);
+                    game = new Board(p, e);
+
                     // Echo back the data
                     OkJoin okJoin = new OkJoin()
                     {
-                        e = new Enemy(request.build)
+                        e = e,
+                        playerId = playerId, // temp const id for now (Change later)
                     };
 
                     var options = new JsonSerializerOptions
@@ -85,33 +96,33 @@ public class TcpServer
                 }
                 else
                 {
-                    Player p = new Player(request.build);
-                    Enemy e = new Enemy(request.build);
-                    Board board = new Board(p, e);
-
                     // TODO : SIMULATE ENEMY PREPERATION (GEMINI API)
 
-                    board.BattlePhase(); // GET LIST OF ATTACKS (AND MAYBE ADDED CARDS) TO ANIAMTE AT THE USER SIDE.
-                    board.EndPhase();
-
-                    if (board.p.health < 1)
+                    if (game != null)
                     {
-                        Console.WriteLine("DEFEAT");
-                        break;
-                    }
-                    if (board.e.health < 1)
-                    {
-                        Console.WriteLine("VICTORY");
-                        break;
-                    }
 
-                    // TODO : ADD RESPONSE
+                        game.BattlePhase(); // GET LIST OF ATTACKS (AND MAYBE ADDED CARDS) TO ANIAMTE AT THE USER SIDE.
+                        game.EndPhase();
+
+                        if (game.p.health < 1)
+                        {
+                            Console.WriteLine("DEFEAT");
+                            break;
+                        }
+                        if (game.e.health < 1)
+                        {
+                            Console.WriteLine("VICTORY");
+                            break;
+                        }
+
+                        // TODO : ADD RESPONSE
+                    }
                 }
             }
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Console.WriteLine($"Error handling client: {e.Message}");
+            Console.WriteLine($"Error handling client: {ex.Message}");
         }
         finally
         {
@@ -131,6 +142,8 @@ class JoinRequest
 
 class OkJoin
 {
+    public int playerId; // The id in the currnet on going game 
+
     public Enemy e;
 }
 
@@ -144,6 +157,7 @@ class RFB // Ready for battle
 /// </summary>
 public class AttackData
 {
+    public int attackerplayerId; 
     public int src;
     public int dest;
 }

@@ -2,6 +2,7 @@ using System.Security.Cryptography.X509Certificates;
 
 abstract class PlayableUser
 {
+    public int playerId;
     public List<int> build;
     public List<Card> hand;
     public List<Card> deck;
@@ -15,8 +16,9 @@ abstract class PlayableUser
     public int health;
     public Faction? LastFaction;
 
-    public PlayableUser(List<int> build)
+    public PlayableUser(int playerId, List<int> build)
     {
+        this.playerId = playerId;
         this.build = build;
         hand = [];
         deck = [];
@@ -36,7 +38,7 @@ abstract class PlayableUser
 
 class Enemy : PlayableUser
 {
-    public Enemy(List<int> build) : base(build)
+    public Enemy(int playerId, List<int> build) : base(playerId, build)
     {
 
     }
@@ -51,7 +53,7 @@ class Player : PlayableUser
 {
     // public List<Artifact> artifacts;
 
-    public Player(List<int> build) : base(build)
+    public Player(int playerId, List<int> build) : base(playerId, build)
     {
 
     }

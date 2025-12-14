@@ -1,0 +1,116 @@
+{
+    "game": "SKYTHRONE",
+    "version": "0.3",
+    "goal": "Reduce the opponent’s Health from 20 to 0.",
+    "battlefield": {
+        "type": "shared",
+        "slots_per_player": 6
+    },
+    "setup": {
+        "player_health": 20,
+        "deck_size": 20,
+        "card_copy_limit": 2,
+        "starting_hand": 3,
+        "hand_limit": 10,
+        "starting_energy": 1,
+        "max_energy": 10,
+        "board_size": 6
+    },
+    "turn_structure": {
+        "simultaneous_turns": true,
+        "priority_rules": {
+            "higher_health_has_priority": true,
+            "tiebreaker": "random",
+            "pve_priority": "player"
+        }
+    },
+    "phases": {
+        "beginning": {
+            "draw": 1,
+            "increase_max_energy": 1,
+            "energy_cap": 10,
+            "refill_energy": true
+        },
+        "prep": {
+            "actions": [
+                "play_units",
+                "activate_prep_abilities",
+                "rearrange_units",
+                "merge_units",
+                "fill_empty_slots"
+            ]
+        },
+        "battle": {
+            "attack_order": "alternating_left_to_right",
+            "dynamic_attack_adjustment": {
+                "if_unit_dies_before_attacking": "next_unit_attacks_immediately",
+                "auto_board_rearrange": true
+            },
+            "trigger_timing": [
+                "adrenaline",
+                "on_deploy",
+                "last_words"
+            ]
+        }
+    },
+    "keywords": {
+        "on_deploy": "Triggers when the Unit enters the battlefield.",
+        "last_words": "Triggers when the Unit dies.",
+        "taunt": "Enemy attacks must target a Taunt Unit; leftmost Taunt is attacked first.",
+        "adrenaline": "Triggers once at the start of each Battle Phase.",
+        "affinity": "Activates if you control a Unit of the specified Faction.",
+        "merging": {
+            "description": "One Unit merges into another friendly Unit.",
+            "effect": "Target gains attack and health of merging Unit.",
+            "board_rearrange_after_merge": true,
+            "example": "A(3/2) merges into B(4/5) → B becomes 7/7."
+        }
+    },
+    "units": {
+        "card_type": "Unit",
+        "attributes": [
+            "cost",
+            "attack",
+            "health",
+            "faction",
+            "abilities"
+        ],
+        "board_occupation": 1,
+        "factions": [
+            "Animals",
+            "Beasts",
+            "Robots",
+            "Undead",
+            "Kingdom",
+            "Fire Elementals",
+            "Air Elementals",
+            "Water Elementals",
+            "Earth Elementals",
+            "Humans"
+        ]
+    },
+    "combat": {
+        "rules": [
+            "Units attack the opposing Unit in the same slot.",
+            "Damage is one-sided; attackers do not take damage.",
+            "If opposing board is smaller, extra Units attack the rightmost enemy Unit.",
+            "If no enemy Units, attacks hit opponent directly.",
+            "Units destroyed mid-battle stop acting immediately."
+        ]
+    },
+    "win_condition": "Reduce opponent’s Health from 20 to 0.",
+    "additional_rules": {
+        "hand_size_overflow": "If drawing beyond 10, the card is discarded.",
+        "simultaneous_effects_resolution": "Player with priority resolves first.",
+        "full_board": "Cannot play Units if board is full unless a card allows it.",
+        "board_rearrangement": "Units shift to fill gaps when a Unit dies."
+    },
+    "glossary": {
+        "unit": "A card with Attack, Health, Faction, and Abilities.",
+        "slot": "A space on the battlefield for a Unit.",
+        "merge": "Combining one Unit into another, adding stats.",
+        "attack_order": "Alternating left-to-right between players.",
+        "board_rearrangement": "Units auto-shift to fill gaps upon death.",
+        "priority": "Determines which player’s effects resolve first."
+    }
+}

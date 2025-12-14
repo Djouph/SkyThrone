@@ -1,4 +1,6 @@
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 abstract class PlayableUser
 {
@@ -33,19 +35,53 @@ abstract class PlayableUser
         LastFaction = null;
     }
 
-    public abstract void Prepere();
+    public abstract Task Prepere(Board b);
 }
 
 class Enemy : PlayableUser
 {
-    public Enemy(int playerId, List<int> build) : base(playerId, build)
+    class PrepereAction
     {
-
+        public int cardIndex { get; set; }
+        public int cardId { get; set; }
     }
 
-    public override void Prepere()
+    public Enemy(int playerId, List<int> build) : base(playerId, build)
     {
-        throw new NotImplementedException();
+    }
+
+    public async override Task Prepere(Board b)
+    {
+        if (maxenergy < MaxEnergy)
+        {
+            maxenergy += 1;
+        }
+        energy = maxenergy;
+        b.Draw(this);
+
+        string result = await Api.Play(b, @"Prepere for battle based on the given rules, return the result STRICTLY in the json format of:
+            {{
+                cardIndex : int, // cand index in hand
+                cardId : int, // the id of the card
+            }}[]
+
+            note: indexes start from 0.
+        ");
+
+        PrepereAction[] actions = JsonSerializer.Deserialize<PrepereAction[]>(result)!;
+        for (int i = 0; i < actions.Length; i++)
+        {
+            int cardplay = actions[i].cardIndex;
+            Console.WriteLine("The Enemy has played " + hand[cardplay].name + $"(id = {actions[i].cardId})");
+            b.Play(this, (Unit)hand[cardplay]);
+            for (int j = 0; j < actions.Length; j++)
+            {
+                if (actions[j].cardIndex > cardplay)
+                {
+                    actions[j].cardIndex--;
+                }
+            }
+        }
     }
 }
 
@@ -58,8 +94,60 @@ class Player : PlayableUser
 
     }
 
-    public override void Prepere()
+    public async override Task Prepere(Board b)
     {
-        throw new NotImplementedException();
+        bool endPhase = false;
+        if (maxenergy < MaxEnergy)
+        {
+            maxenergy += 1;
+        }
+        energy = maxenergy;
+        b.Draw(this);
+        while (!endPhase)
+        {
+            Console.WriteLine("your energy:" + energy);
+            Console.WriteLine("hand:");
+            for (int i = 0; i < hand.Count; i++)
+            {
+                Console.Write(hand[i].name + " (" + ((Unit)hand[i]).cost + ")" + " ,");
+            }
+            Console.WriteLine();
+            Console.WriteLine("your board:");
+            for (int i = 0; i < board.Count; i++)
+            {
+                Console.Write(board[i].name + ",");
+            }
+            Console.WriteLine();
+            Console.WriteLine("You have " + deck.Count + " cards in your deck");
+            Console.WriteLine();
+
+            Console.WriteLine("what card do you want to play? (0 = Dont play anything)");
+            int cardplay = int.Parse(Console.ReadLine()!) - 1;
+            if (cardplay == -1)
+            {
+                break;
+            }
+            else
+            {
+                Console.WriteLine("do you want to play this card or view it? p/v");
+                if (char.Parse(Console.ReadLine()!) == 'p')
+                {
+                    LastFaction = ((Unit)hand[cardplay]).faction;
+                    b.Play(this, (Unit)hand[cardplay]);
+
+                }
+                else if (char.Parse(Console.ReadLine()!) == 'v')
+                {
+                    Console.WriteLine(hand[cardplay].description);
+                }
+            }
+
+
+            Console.WriteLine(" do you want to end your turn? yes/no");
+            if (Console.ReadLine() == "yes")
+            {
+                endPhase = true;
+            }
+        }
     }
 }

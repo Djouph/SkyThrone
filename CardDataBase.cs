@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 
 class DataBase
 {
-    static Dictionary<int, Card> lookup = new Dictionary<int, Card>();
+    public static Dictionary<int, Card> lookup = new Dictionary<int, Card>();
 
     // static Unit - = new(
     //     cost: -,
@@ -37,10 +37,11 @@ class DataBase
     attack: 1,
     Health: 2,
     id: 10,
+
     faction: Faction.Small,
-    onDeploy: (b, card) =>
+    onDeploy: (sender, b, Card) =>
     {
-        b.Draw();
+        b.Draw(sender);
     });
 
 
@@ -53,9 +54,9 @@ class DataBase
        Health: 2,
        id: 1,
        faction: Faction.Small,
-       adrenaline: (b, card) =>
+       adrenaline: (sender, b, Card) =>
        {
-           card.attack += 1;
+           Card.attack += 1;
        }
        );
 
@@ -74,18 +75,19 @@ class DataBase
 
        cost: 3,
        name: "Owl Watcher",
-       description: "opposing enemy has -1 attack",
+       description: "adrenaline: give 3 random enemy units -1 attack",
        attack: 2,
        Health: 3,
        id: 3,
        faction: Faction.Small,
-       adrenaline: (b, card) =>
+       adrenaline: (sender, b, Card) =>
         {
             Random rnd = new Random();
-
-            int i = rnd.Next(0, b.current.board.Count);
-            ((Unit)b.current.board[i]).attack -= 1;
-
+            for (int i = 0; i < 3; i++)
+            {
+                int j = rnd.Next(0, b.FindOther(sender).board.Count);
+                ((Unit)b.FindOther(sender).board[j]).attack -= 1;
+            }
         }
        );
 
@@ -110,13 +112,13 @@ class DataBase
        Health: 6,
        id: 5,
        faction: Faction.Small,
-       adrenaline: (b, card) =>
+       adrenaline: (sender, b, Card) =>
     {
 
         for (int i = 0; i < b.p.board.Count; i++)
         {
-            ((Unit)b.current.board[i]).attack += 1;
-            ((Unit)b.current.board[i]).Health += 1;
+            ((Unit)sender.board[i]).attack += 1;
+            ((Unit)sender.board[i]).Health += 1;
         }
 
     }
@@ -132,9 +134,9 @@ class DataBase
        Health: 2,
        id: 6,
        faction: Faction.Small,
-       adrenaline: (b, card) =>
+       adrenaline: (sender, b, Card) =>
        {
-           card.Health += 1;
+           Card.Health += 1;
        }
        );
 
@@ -148,12 +150,12 @@ class DataBase
        Health: 5,
        id: 7,
        faction: Faction.Small,
-       onDeploy: (b, card) =>
+       onDeploy: (sender, b, Card) =>
        {
 
-           for (int i = 0; i < b.current.board.Count - 1; i++)
+           for (int i = 0; i < sender.board.Count - 1; i++)
            {
-               card.attack += 1;
+               Card.attack += 1;
            }
 
        }
@@ -168,12 +170,12 @@ class DataBase
         Health: 1,
         id: 8,
         faction: Faction.Small,
-        onDeploy: (b, card) =>
+        onDeploy: (sender, b, Card) =>
         {
 
-            if (b.current.maxenergy < 11)
+            if (sender.maxenergy < 11)
             {
-                b.current.maxenergy++;
+                sender.maxenergy++;
             }
 
         }
@@ -187,12 +189,12 @@ class DataBase
         Health: 3,
         id: 9,
         faction: Faction.Small,
-        onDeploy: (b, card) =>
+        onDeploy: (sender, b, Card) =>
         {
 
-            for (int i = 0; i < b.current.board.Count; i++)
+            for (int i = 0; i < sender.board.Count; i++)
             {
-                ((Unit)b.current.board[i]).Health += 1;
+                ((Unit)sender.board[i]).Health += 1;
             }
 
 
@@ -211,18 +213,18 @@ class DataBase
         Health: 3,
         id: 100,
         faction: Faction.Robot,
-        onDeploy: (b, card) =>
+        onDeploy: (sender, b, Card) =>
         {
-            int Index = b.current.board.IndexOf(card);
+            int Index = sender.board.IndexOf(Card);
             if (Index != 0)
             {
-                if (((Unit)b.current.board[Index - 1]).faction == Faction.Robot)
+                if (((Unit)sender.board[Index - 1]).faction == Faction.Robot)
                 {
-                    b.Merge(card, (Unit)b.current.board[Index - 1]);
+                    b.Merge(Card, (Unit)sender.board[Index - 1]);
                 }
                 else
                 {
-                    b.kill(card);
+                    b.kill(Card);
                 }
             }
         }
@@ -247,10 +249,10 @@ class DataBase
        Health: 2,
        id: 102,
        faction: Faction.Human,
-       onDeploy: (b, Card) =>
+       onDeploy: (sender, b, Card) =>
        {
-           b.current.hand.Add(CardFromId(100));
-           b.current.hand.Add(CardFromId(101));
+           sender.hand.Add(CardFromId(100));
+           sender.hand.Add(CardFromId(101));
        }
        );
 
@@ -262,14 +264,14 @@ class DataBase
        Health: 2,
        id: 103,
        faction: Faction.Robot,
-        adrenaline: (b, Card) =>
+        adrenaline: (sender, b, Card) =>
        {
-           for (int i = 0; i < b.current.board.Count; i++)
+           for (int i = 0; i < sender.board.Count; i++)
            {
-               if (((Unit)b.current.board[i]).faction == Faction.Robot)
+               if (((Unit)sender.board[i]).faction == Faction.Robot)
                {
-                   ((Unit)b.current.board[i]).attack++;
-                   ((Unit)b.current.board[i]).Health++;
+                   ((Unit)sender.board[i]).attack++;
+                   ((Unit)sender.board[i]).Health++;
                    break;
                }
            }
@@ -285,14 +287,14 @@ class DataBase
        Health: 6,
        id: 104,
        faction: Faction.Robot,
-        onDeploy: (b, Card) =>
+        onDeploy: (sender, b, Card) =>
         {
-            int Index = b.current.board.IndexOf(Card);
-            for (int i = 0; i < b.current.board.Count; i++)
+            int Index = sender.board.IndexOf(Card);
+            for (int i = 0; i < sender.board.Count; i++)
             {
-                if (((Unit)b.current.board[i]).faction == Faction.Robot && i != Index)
+                if (((Unit)sender.board[i]).faction == Faction.Robot && i != Index)
                 {
-                    b.Merge(Card, ((Unit)b.current.board[i]));
+                    b.Merge(Card, ((Unit)sender.board[i]));
                     Card.attack += 2;
                     Card.Health += 2;
                 }
@@ -309,7 +311,7 @@ class DataBase
        Health: 1,
        id: 105,
        faction: Faction.Robot,
-        adrenaline: (b, Card) =>
+        adrenaline: (sender, b, Card) =>
        {
            Card.attack = Card.attack * 2;
        }
@@ -323,16 +325,16 @@ class DataBase
        Health: 2,
        id: 106,
        faction: Faction.Robot,
-        adrenaline: (b, Card) =>
+        adrenaline: (sender, b, Card) =>
        {
            bool HaveRobot = false;
-           for (int j = 0; j < b.current.board.Count; j++)
+           for (int j = 0; j < sender.board.Count; j++)
            {
-               if ((((Unit)b.current.board[j]).faction) == Faction.Robot)
+               if ((((Unit)sender.board[j]).faction) == Faction.Robot)
                {
-                   for (int i = 0; i < b.other.board.Count; i++)
+                   for (int i = 0; i < b.FindOther(sender).board.Count; i++)
                    {
-                       ((Unit)b.other.board[i]).TakeDamage(1, b);
+                       ((Unit)b.FindOther(sender).board[i]).TakeDamage(sender, 1, b);
                    }
                }
            }
@@ -352,21 +354,21 @@ class DataBase
        Health: 2,
        id: 107,
        faction: Faction.Robot,
-        onDeploy: (b, Card) =>
+        onDeploy: (sender, b, Card) =>
        {
 
-           for (int j = 0; j < b.current.board.Count; j++)
+           for (int j = 0; j < sender.board.Count; j++)
            {
-               if (((Unit)b.current.board[j]) != Card)
+               if (((Unit)sender.board[j]) != Card)
                {
-                   if (((Unit)b.current.board[j]).faction == Faction.Robot)
+                   if (((Unit)sender.board[j]).faction == Faction.Robot)
                    {
-                       for (int i = 0; i < b.current.deck.Count; i++)
+                       for (int i = 0; i < sender.deck.Count; i++)
                        {
-                           if (((Unit)b.current.deck[i]).cost >= 5)
+                           if (((Unit)sender.deck[i]).cost >= 5)
                            {
-                               b.current.hand.Add(b.current.deck[i]);
-                               b.Remove(i);
+                               sender.hand.Add(sender.deck[i]);
+                               b.Remove(sender, i);
                                break;
                            }
                        }
@@ -385,13 +387,13 @@ class DataBase
        Health: 2,
        id: 108,
        faction: Faction.Robot,
-        onDeploy: (b, Card) =>
+        onDeploy: (sender, b, Card) =>
        {
-           for (int i = 0; i < b.current.hand.Count; i++)
+           for (int i = 0; i < sender.hand.Count; i++)
            {
-               if (((Unit)b.current.hand[i]).faction == Faction.Robot)
+               if (((Unit)sender.hand[i]).faction == Faction.Robot)
                {
-                   ((Unit)b.current.hand[i]).cost--;
+                   ((Unit)sender.hand[i]).cost--;
                }
            }
        }
@@ -405,7 +407,7 @@ class DataBase
        Health: 4,
        id: 109,
        faction: Faction.Robot,
-       adrenaline: (b, Card) =>
+       adrenaline: (sender, b, Card) =>
        {
            if (Card.Health < 4)
            {
@@ -426,17 +428,17 @@ class DataBase
         Health: 1,
         id: 200,
         faction: Faction.Undead,
-        lastWords: (b, Card) =>
+        lastWords: (sender, b, Card) =>
         {
-            if (b.current.board.Contains(Card))
+            if (sender.board.Contains(Card))
             {
-                int temp = b.current.board.IndexOf(Card);
-                b.current.board[temp] = CardFromId(701);
+                int temp = sender.board.IndexOf(Card);
+                sender.board[temp] = CardFromId(704);
             }
             else
             {
-                int temp = b.other.board.IndexOf(Card);
-                b.other.board[temp] = CardFromId(701);
+                int temp = b.FindOther(sender).board.IndexOf(Card);
+                b.FindOther(sender).board[temp] = CardFromId(704);
             }
         }
         );
@@ -447,7 +449,7 @@ class DataBase
         description: "Grrrrr...",
         attack: 1,
         Health: 1,
-        id: 701,
+        id: 704,
         faction: Faction.Undead
         );
 
@@ -459,20 +461,20 @@ class DataBase
         Health: 1,
         id: 201,
         faction: Faction.Undead,
-        lastWords: (b, Card) =>
+        lastWords: (sender, b, Card) =>
         {
-            if (b.current.board.Contains(Card))
+            if (sender.board.Contains(Card))
             {
-                for (int i = 0; i < b.current.board.Count; i++)
+                for (int i = 0; i < sender.board.Count; i++)
                 {
-                    ((Unit)b.current.board[i]).attack++;
+                    ((Unit)sender.board[i]).attack++;
                 }
             }
             else
             {
-                for (int i = 0; i < b.other.board.Count; i++)
+                for (int i = 0; i < sender.board.Count; i++)
                 {
-                    ((Unit)b.other.board[i]).attack++;
+                    ((Unit)sender.board[i]).attack++;
                 }
             }
         }
@@ -487,20 +489,20 @@ class DataBase
         id: 202,
         taunt: true,
         faction: Faction.Undead,
-        lastWords: (b, Card) =>
+        lastWords: (sender, b, Card) =>
         {
-            if (b.current.board.Contains(Card))
+            if (sender.board.Contains(Card))
             {
-                for (int i = 0; i < b.current.board.Count - 1; i++)
+                for (int i = 0; i < sender.board.Count - 1; i++)
                 {
-                    ((Unit)b.current.board[i]).Health++;
+                    ((Unit)sender.board[i]).Health++;
                 }
             }
             else
             {
-                for (int i = 0; i < b.other.board.Count - 1; i++)
+                for (int i = 0; i < b.FindOther(sender).board.Count - 1; i++)
                 {
-                    ((Unit)b.other.board[i]).Health++;
+                    ((Unit)b.FindOther(sender).board[i]).Health++;
                 }
             }
         }
@@ -514,7 +516,7 @@ class DataBase
         Health: 2,
         id: 203,
         faction: Faction.Undead,
-        adrenaline: (b, Card) =>
+        adrenaline: (sender, b, Card) =>
         {
             b.p.health--;
             b.e.health--;
@@ -529,13 +531,13 @@ class DataBase
         Health: 1,
         id: 204,
         faction: Faction.Undead,
-        adrenaline: (b, Card) =>
+        adrenaline: (sender, b, Card) =>
         {
-            if (b.other.board.Count != 0)
+            if (b.FindOther(sender).board.Count != 0)
             {
                 Random rnd = new Random();
-                int temp = rnd.Next(0, b.other.board.Count);
-                ((Unit)b.other.board[temp]).TakeDamage(2, b);
+                int temp = rnd.Next(0, b.FindOther(sender).board.Count);
+                ((Unit)b.FindOther(sender).board[temp]).TakeDamage(sender, 2, b);
             }
         }
         );
@@ -548,13 +550,13 @@ class DataBase
         Health: 2,
         id: 205,
         faction: Faction.Undead,
-        onDeploy: (b, Card) =>
+        onDeploy: (sender, b, Card) =>
         {
-            b.Draw();
+            b.Draw(sender);
         },
-        lastWords: (b, Card) =>
+        lastWords: (sender, b, Card) =>
         {
-            b.Draw();
+            b.Draw(sender);
         }
         );
 
@@ -566,7 +568,7 @@ class DataBase
         Health: 4,
         id: 206,
         faction: Faction.Undead,
-        adrenaline: (b, Card) =>
+        adrenaline: (sender, b, Card) =>
         {
             Card.Health++;
             Card.attack++;
@@ -582,17 +584,17 @@ class DataBase
         id: 207,
         faction: Faction.Undead,
         taunt: true,
-        lastWords: (b, Card) =>
+        lastWords: (sender, b, Card) =>
         {
-            if (b.current.board.Contains(Card))
+            if (sender.board.Contains(Card))
             {
-                b.current.board.Add(CardFromId(200));
-                b.current.board.Add(CardFromId(200));
+                sender.board.Add(CardFromId(200));
+                sender.board.Add(CardFromId(200));
             }
             else
             {
-                b.other.board.Add(CardFromId(200));
-                b.other.board.Add(CardFromId(200));
+                sender.board.Add(CardFromId(200));
+                sender.board.Add(CardFromId(200));
             }
         }
         );
@@ -605,29 +607,29 @@ class DataBase
         Health: 6,
         id: 208,
         faction: Faction.Undead,
-        onDeploy: (b, Card) =>
+        onDeploy: (sender, b, Card) =>
         {
-            b.current.health -= 3;
+            sender.health -= 3;
         },
-        lastWords: (b, Card) =>
+        lastWords: (sender, b, Card) =>
         {
-            if (b.current.board.Contains(Card))
+            if (sender.board.Contains(Card))
             {
-                for (int i = 0; i < b.other.board.Count; i++)
+                for (int i = 0; i < b.FindOther(sender).board.Count; i++)
                 {
-                    ((Unit)b.other.board[i]).TakeDamage(1, b);
+                    ((Unit)b.FindOther(sender).board[i]).TakeDamage(sender, 1, b);
                 }
-                int temp = b.current.board.IndexOf(Card);
-                b.current.board[temp] = CardFromId(702);
+                int temp = sender.board.IndexOf(Card);
+                sender.board[temp] = CardFromId(702);
             }
             else
             {
-                for (int i = 0; i < b.current.board.Count; i++)
+                for (int i = 0; i < sender.board.Count; i++)
                 {
-                    ((Unit)b.current.board[i]).TakeDamage(1, b);
+                    ((Unit)sender.board[i]).TakeDamage(sender, 1, b);
                 }
-                int temp = b.other.board.IndexOf(Card);
-                b.other.board[temp] = CardFromId(702);
+                int temp = b.FindOther(sender).board.IndexOf(Card);
+                b.FindOther(sender).board[temp] = CardFromId(702);
             }
         }
         );
@@ -638,27 +640,27 @@ class DataBase
     description: "Last Words: Summon Dieing Lich King and deal deal 1 damage to all enemies",
     attack: 5,
     Health: 5,
-    id: 702,
+    id: 705,
     faction: Faction.Undead,
-    lastWords: (b, Card) =>
+    lastWords: (sender, b, Card) =>
     {
-        if (b.current.board.Contains(Card))
+        if (sender.board.Contains(Card))
         {
-            for (int i = 0; i < b.other.board.Count; i++)
+            for (int i = 0; i < b.FindOther(sender).board.Count; i++)
             {
-                ((Unit)b.other.board[i]).TakeDamage(1, b);
+                ((Unit)b.FindOther(sender).board[i]).TakeDamage(sender, 1, b);
             }
-            int temp = b.current.board.IndexOf(Card);
-            b.current.board[temp] = CardFromId(703);
+            int temp = sender.board.IndexOf(Card);
+            sender.board[temp] = CardFromId(703);
         }
         else
         {
-            for (int i = 0; i < b.current.board.Count; i++)
+            for (int i = 0; i < sender.board.Count; i++)
             {
-                ((Unit)b.current.board[i]).TakeDamage(1, b);
+                ((Unit)sender.board[i]).TakeDamage(sender, 1, b);
             }
-            int temp = b.other.board.IndexOf(Card);
-            b.other.board[temp] = CardFromId(703);
+            int temp = b.FindOther(sender).board.IndexOf(Card);
+            b.FindOther(sender).board[temp] = CardFromId(703);
         }
     }
     );
@@ -669,22 +671,22 @@ class DataBase
     description: "Last Words: Deal 1 damage to all enemies",
     attack: 5,
     Health: 4,
-    id: 703,
+    id: 706,
     faction: Faction.Undead,
-    lastWords: (b, Card) =>
+    lastWords: (sender, b, Card) =>
     {
-        if (b.current.board.Contains(Card))
+        if (sender.board.Contains(Card))
         {
-            for (int i = 0; i < b.other.board.Count; i++)
+            for (int i = 0; i < b.FindOther(sender).board.Count; i++)
             {
-                ((Unit)b.other.board[i]).TakeDamage(1, b);
+                ((Unit)b.FindOther(sender).board[i]).TakeDamage(sender, 1, b);
             }
         }
         else
         {
-            for (int i = 0; i < b.current.board.Count; i++)
+            for (int i = 0; i < sender.board.Count; i++)
             {
-                ((Unit)b.current.board[i]).TakeDamage(1, b);
+                ((Unit)sender.board[i]).TakeDamage(sender, 1, b);
             }
         }
     }
@@ -715,17 +717,17 @@ class DataBase
     id: 301,
     faction: Faction.Kingdom,
     HolyGuard: true,
-    lastWords: (b, Card) =>
+    lastWords: (sender, b, Card) =>
     {
-        if (b.current.board.Contains(Card))
+        if (sender.board.Contains(Card))
         {
-            int temp = b.current.board.IndexOf(Card);
-            b.current.board[temp] = CardFromId(704);
+            int temp = sender.board.IndexOf(Card);
+            sender.board[temp] = CardFromId(704);
         }
         else
         {
-            int temp = b.other.board.IndexOf(Card);
-            b.other.board[temp] = CardFromId(704);
+            int temp = b.FindOther(sender).board.IndexOf(Card);
+            b.FindOther(sender).board[temp] = CardFromId(704);
         }
     }
     );
@@ -736,7 +738,7 @@ class DataBase
     description: "HolyGuard",
     attack: 3,
     Health: 3,
-    id: 704,
+    id: 703,
     faction: Faction.Kingdom,
     HolyGuard: true
     );
@@ -750,7 +752,7 @@ class DataBase
     Health: 5,
     id: 302,
     faction: Faction.Kingdom,
-    takeDamage: (damage, b, Card) =>
+    takeDamage: (sender, damage, b, Card) =>
     {
         if (Card.HolyGuard)
         {
@@ -761,14 +763,14 @@ class DataBase
             Card.Health -= damage;
             if (Card.Health <= 3)
             {
-                int temp = b.current.board.IndexOf(Card);
-                if (b.current.board.Count == b.current.MaxBoardSize)
+                int temp = sender.board.IndexOf(Card);
+                if (sender.board.Count == sender.MaxBoardSize)
                 {
-                    for (int i = b.current.board.Count; i > temp; i--)
+                    for (int i = sender.board.Count; i > temp; i--)
                     {
-                        b.current.board[i] = b.current.board[i + 1];
+                        sender.board[i] = sender.board[i + 1];
                     }
-                    b.current.board[temp + 1] = CardFromId(705);
+                    sender.board[temp + 1] = CardFromId(705);
                 }
             }
             if (Card.Health <= 0)
@@ -788,7 +790,7 @@ class DataBase
     description: "Protect the heir!",
     attack: 6,
     Health: 6,
-    id: 705,
+    id: 702,
     faction: Faction.Kingdom,
     taunt: true
     );
@@ -801,11 +803,14 @@ class DataBase
         Health: 3,
         id: 303,
         faction: Faction.Kingdom,
-        adrenaline: (b, Card) =>
+        adrenaline: (sender, b, Card) =>
         {
-            b.current.health += 2;
-            int temp = b.current.board.IndexOf(Card);
-            ((Unit)b.current.board[temp + 1]).HolyGuard = true;
+            sender.health += 2;
+            int temp = sender.board.IndexOf(Card);
+            if (temp + 1 < sender.board.Count)
+            {
+                ((Unit)sender.board[temp + 1]).HolyGuard = true;
+            }
         }
     );
 
@@ -818,9 +823,9 @@ class DataBase
     Health: 3,
     id: 304,
     faction: Faction.Kingdom,
-    adrenaline: (b, Card) =>
+    adrenaline: (sender, b, Card) =>
     {
-        if (b.current.health > b.other.health)
+        if (sender.health > b.FindOther(sender).health)
         {
             Card.attack += 1;
             Card.Health += 2;
@@ -837,10 +842,13 @@ class DataBase
     Health: 3,
     id: 305,
     faction: Faction.Kingdom,
-    adrenaline: (b, Card) =>
+    adrenaline: (sender, b, Card) =>
     {
-        int temp = b.current.board.IndexOf(Card);
-        ((Unit)b.current.board[temp + 1]).Health += 2;
+        int temp = sender.board.IndexOf(Card);
+        if (sender.board.Count > temp + 1)
+        {
+            ((Unit)sender.board[temp + 1]).Health += 2;
+        }
     }
     );
 
@@ -854,10 +862,10 @@ class DataBase
     Health: 1,
     id: 306,
     faction: Faction.Kingdom,
-    adrenaline: (b, Card) =>
+    adrenaline: (sender, b, Card) =>
     {
-        int temp = b.current.board.IndexOf(Card);
-        if (Card.attack > ((Unit)b.other.board[temp]).attack)
+        int temp = sender.board.IndexOf(Card);
+        if (Card.attack > ((Unit)sender.board[temp]).attack)
         {
             Card.HolyGuard = true;
         }
@@ -873,14 +881,14 @@ class DataBase
     Health: 3,
     id: 307,
     faction: Faction.Kingdom,
-    adrenaline: (b, Card) =>
+    adrenaline: (sender, b, Card) =>
     {
-        for (int i = 0; i < b.current.board.Count; i++)
+        for (int i = 0; i < sender.board.Count; i++)
         {
-            if (((Unit)b.current.board[i]).id == 42)
+            if (((Unit)sender.board[i]).id == 42)
             {
                 Card.Health += 2;
-                ((Unit)b.current.board[i]).attack += 2;
+                ((Unit)sender.board[i]).attack += 2;
             }
             {
             }
@@ -898,13 +906,13 @@ class DataBase
     Health: 7,
     id: 308,
     faction: Faction.Kingdom,
-    onDeploy: (b, Card) =>
+    onDeploy: (sender, b, Card) =>
     {
-        for (int i = 0; i < b.current.board.Count; i++)
+        for (int i = 0; i < sender.board.Count; i++)
         {
-            if (((Unit)b.current.board[i]).faction == Faction.Kingdom)
+            if (((Unit)sender.board[i]).faction == Faction.Kingdom)
             {
-                ((Unit)b.current.board[i]).HolyGuard = true;
+                ((Unit)sender.board[i]).HolyGuard = true;
             }
             {
             }
@@ -924,31 +932,31 @@ class DataBase
     Health: 2,
     id: 400,
     faction: Faction.FireElementals,
-    onDeploy: (b, Card) =>
+    onDeploy: (sender, b, Card) =>
     {
-        if (b.current.LastFaction == Faction.FireElementals)
+        if (sender.LastFaction == Faction.FireElementals)
         {
-            for (int i = 0; i < b.current.board.Count; i++)
+            for (int i = 0; i < sender.board.Count; i++)
             {
-                if (((Unit)b.current.board[i]).faction == Faction.FireElementals)
+                if (((Unit)sender.board[i]).faction == Faction.FireElementals)
                 {
-                    ((Unit)b.current.board[i]).attack++;
+                    ((Unit)sender.board[i]).attack++;
                 }
             }
 
-            for (int i = 0; i < b.current.hand.Count; i++)
+            for (int i = 0; i < sender.hand.Count; i++)
             {
-                if (((Unit)b.current.board[i]).faction == Faction.FireElementals)
+                if (((Unit)sender.board[i]).faction == Faction.FireElementals)
                 {
-                    ((Unit)b.current.board[i]).attack++;
+                    ((Unit)sender.board[i]).attack++;
                 }
             }
 
-            for (int i = 0; i < b.current.deck.Count; i++)
+            for (int i = 0; i < sender.deck.Count; i++)
             {
-                if (((Unit)b.current.board[i]).faction == Faction.FireElementals)
+                if (((Unit)sender.board[i]).faction == Faction.FireElementals)
                 {
-                    ((Unit)b.current.board[i]).attack++;
+                    ((Unit)sender.board[i]).attack++;
                 }
             }
 
@@ -964,12 +972,12 @@ class DataBase
     Health: 2,
     id: 401,
     faction: Faction.AirElementals,
-    onDeploy: (b, Card) =>
+    onDeploy: (sender, b, Card) =>
     {
-        if (b.current.LastFaction == Faction.AirElementals)
+        if (sender.LastFaction == Faction.AirElementals)
         {
-            b.Draw();
-            b.Draw();
+            b.Draw(sender);
+            b.Draw(sender);
         }
     }
     );
@@ -983,23 +991,23 @@ class DataBase
     Health: 2,
     id: 402,
     faction: Faction.WaterElementals,
-    onDeploy: (b, Card) =>
+    onDeploy: (sender, b, Card) =>
     {
-        if (b.current.LastFaction == Faction.FireElementals)
+        if (sender.LastFaction == Faction.FireElementals)
         {
-            for (int i = 0; i < b.current.board.Count; i++)
+            for (int i = 0; i < sender.board.Count; i++)
             {
-                if (((Unit)b.current.board[i]).faction == Faction.FireElementals)
+                if (((Unit)sender.board[i]).faction == Faction.FireElementals)
                 {
-                    ((Unit)b.current.board[i]).attack++;
+                    ((Unit)sender.board[i]).attack++;
                 }
             }
 
-            for (int i = 0; i < b.current.board.Count; i++)
+            for (int i = 0; i < sender.board.Count; i++)
             {
-                if (((Unit)b.current.board[i]).faction == Faction.WaterElementals)
+                if (((Unit)sender.board[i]).faction == Faction.WaterElementals)
                 {
-                    ((Unit)b.current.board[i]).Health++;
+                    ((Unit)sender.board[i]).Health++;
                 }
             }
         }
@@ -1016,9 +1024,9 @@ class DataBase
     id: 403,
     faction: Faction.EarthElementals,
     taunt: true,
-    onDeploy: (b, Card) =>
+    onDeploy: (sender, b, Card) =>
     {
-        if (b.current.LastFaction == Faction.EarthElementals)
+        if (sender.LastFaction == Faction.EarthElementals)
         {
             Card.Health += 3;
         }
@@ -1035,29 +1043,29 @@ class DataBase
     Health: 4,
     id: 404,
     faction: Faction.Human,
-    adrenaline: (b, Card) =>
+    adrenaline: (sender, b, Card) =>
     {
-        if (b.current.LastFaction == Faction.FireElementals || b.current.LastFaction == Faction.EarthElementals || b.current.LastFaction == Faction.WaterElementals || b.current.LastFaction == Faction.AirElementals)
+        if (sender.LastFaction == Faction.FireElementals || sender.LastFaction == Faction.EarthElementals || sender.LastFaction == Faction.WaterElementals || sender.LastFaction == Faction.AirElementals)
         {
-            for (int i = 0; i < b.current.board.Count; i++)
+            for (int i = 0; i < sender.board.Count; i++)
             {
-                if (((Unit)b.current.board[i]).faction == Faction.FireElementals)
+                if (((Unit)sender.board[i]).faction == Faction.FireElementals)
                 {
-                    ((Unit)b.current.board[i]).attack += 3;
+                    ((Unit)sender.board[i]).attack += 3;
                 }
 
-                if (((Unit)b.current.board[i]).faction == Faction.WaterElementals)
+                if (((Unit)sender.board[i]).faction == Faction.WaterElementals)
                 {
-                    ((Unit)b.current.board[i]).Health += 3;
+                    ((Unit)sender.board[i]).Health += 3;
                 }
-                if (((Unit)b.current.board[i]).faction == Faction.EarthElementals)
+                if (((Unit)sender.board[i]).faction == Faction.EarthElementals)
                 {
-                    ((Unit)b.current.board[i]).taunt = true;
+                    ((Unit)sender.board[i]).taunt = true;
                 }
 
-                if (((Unit)b.current.board[i]).faction == Faction.AirElementals)
+                if (((Unit)sender.board[i]).faction == Faction.AirElementals)
                 {
-                    b.Draw();
+                    b.Draw(sender);
                 }
             }
         }
@@ -1074,11 +1082,11 @@ class DataBase
     id: 405,
     faction: Faction.FireElementals,
 
-    onDeploy: (b, Card) =>
+    onDeploy: (sender, b, Card) =>
     {
-        if (b.current.LastFaction == Faction.FireElementals)
+        if (sender.LastFaction == Faction.FireElementals)
         {
-            b.current.hand.Add(CardFromId(54));
+            sender.hand.Add(CardFromId(54));
         }
     }
     );
@@ -1092,11 +1100,11 @@ class DataBase
     id: 406,
     faction: Faction.FireElementals,
 
-    onDeploy: (b, Card) =>
+    onDeploy: (sender, b, Card) =>
     {
-        if (b.current.LastFaction == Faction.WaterElementals)
+        if (sender.LastFaction == Faction.WaterElementals)
         {
-            b.current.hand.Add(CardFromId(54));
+            sender.hand.Add(CardFromId(54));
         }
     }
     );
@@ -1111,13 +1119,13 @@ class DataBase
     id: 407,
     faction: Faction.FireElementals,
 
-    onDeploy: (b, Card) =>
+    onDeploy: (sender, b, Card) =>
     {
-        if (b.current.LastFaction == Faction.AirElementals)
+        if (sender.LastFaction == Faction.AirElementals)
         {
-            b.current.hand.Add(CardFromId(54));
+            sender.hand.Add(CardFromId(54));
         }
-        b.Draw();
+        b.Draw(sender);
     }
     );
 
@@ -1130,11 +1138,11 @@ class DataBase
     id: 408,
     faction: Faction.EarthElementals,
 
-    onDeploy: (b, Card) =>
+    onDeploy: (sender, b, Card) =>
     {
-        if (b.current.LastFaction == Faction.EarthElementals)
+        if (sender.LastFaction == Faction.EarthElementals)
         {
-            b.current.hand.Add(CardFromId(54));
+            sender.hand.Add(CardFromId(54));
         }
     }
     );
@@ -1148,14 +1156,14 @@ class DataBase
     id: 409,
     faction: Faction.EarthElementals,
 
-    adrenaline: (b, Card) =>
+    adrenaline: (sender, b, Card) =>
     {
-        if (b.current.board.Exists(u => u.name == "Flame Core") &&
-        b.current.board.Exists(u => u.name == "Tide Core") &&
-        b.current.board.Exists(u => u.name == "Wind Core") &&
-        b.current.board.Exists(u => u.name == "Stone Core"))
+        if (sender.board.Exists(u => u.name == "Flame Core") &&
+        sender.board.Exists(u => u.name == "Tide Core") &&
+        sender.board.Exists(u => u.name == "Wind Core") &&
+        sender.board.Exists(u => u.name == "Stone Core"))
         {
-            b.current.hand.Add(CardFromId(410));
+            sender.hand.Add(CardFromId(410));
         }
     }
     );
@@ -1163,14 +1171,14 @@ class DataBase
     static Unit e11 = new(
     cost: 10,
     name: "Elemental Avatar KARSHE, Primal Equilibrium",
-    description: "All forces united under one will.",
+    description: "adrenaline: win the game",
     attack: 20,
     Health: 20,
     id: 410,
     faction: Faction.Human,
-    adrenaline: (b, Card) =>
+    adrenaline: (sender, b, Card) =>
     {
-        b.other.health = 0;
+        sender.health = 0;
     }
     );
 
@@ -1226,36 +1234,37 @@ class DataBase
         Health: 2,
         id: 500,
         faction: Faction.Pirate,
-            onDeploy: (Board b, Unit unit) =>
+            onDeploy: (sender, b, unit) =>
             {
-                b.Infeltrait(705);
-                b.Infeltrait(705);
-                b.Infeltrait(705);
+                b.Infeltrait(sender, 705);
+                b.Infeltrait(sender, 705);
+                b.Infeltrait(sender, 705);
             }
         );
 
     static InstaPlay t7 = new(
     name: "border",
     description: "*BORD!!!*",
-    id: 705,
-    onDraw: (b) =>
+    id: 707,
+    onDraw: (sender, b) =>
     {
-        if (b.current.board[0] != null)
+        if (sender.board[0] != null)
         {
-            ((Unit)b.current.board[0]).TakeDamage(2, b);
+            ((Unit)sender.board[0]).TakeDamage(sender, 2, b);
         }
-        if (b.other.board.Count < 7)
+        if (b.FindOther(sender).board.Count < 7)
         {
-            b.other.board.Add(CardFromId(706));
+            b.FindOther(sender).board.Add(CardFromId(706));
         }
         else
         {
-            for (int i = 0; i < b.other.board.Count; i++)
+
+            for (int i = 0; i < b.FindOther(sender).board.Count; i++)
             {
-                if (((Unit)b.other.board[i]).faction == Faction.Pirate)
+                if (((Unit)b.FindOther(sender).board[i]).faction == Faction.Pirate)
                 {
-                    ((Unit)b.other.board[i]).Health += 2;
-                    ((Unit)b.other.board[i]).attack += 2;
+                    ((Unit)b.FindOther(sender).board[i]).Health += 2;
+                    ((Unit)b.FindOther(sender).board[i]).attack += 2;
                     break;
                 }
             }
@@ -1268,7 +1277,7 @@ class DataBase
     description: "*Get Them*",
     attack: 2,
     Health: 2,
-    id: 706,
+    id: 708,
     faction: Faction.Pirate
     );
 
@@ -1284,9 +1293,9 @@ class DataBase
     Health: 2,
     id: 600,
     faction: Faction.Beast,
-    onDeploy: (b, card) =>
+    onDeploy: (sender, b, Card) =>
     {
-        b.Infeltrait(2);
+        b.Infeltrait(sender, 2);
     });
 
 
@@ -1294,26 +1303,26 @@ class DataBase
     name: "doom charge",
     description: "when drawn destroy a card in your board, hand and deck",
     id: 701,
-    onDraw: (b) =>
+    onDraw: (sender, b) =>
     {
         Console.WriteLine("doom charge explodes");
         int place = 0;
         Random rnd = new Random();
-        if (b.current.board.Count != 0)
+        if (sender.board.Count != 0)
         {
-            place = rnd.Next(0, b.current.board.Count);
-            Console.WriteLine("The exposion kills " + b.current.board[place].name);
-            b.kill((Unit)b.current.board[place]);
+            place = rnd.Next(0, sender.board.Count);
+            Console.WriteLine("The exposion kills " + sender.board[place].name);
+            b.kill((Unit)sender.board[place]);
         }
-        if (b.current.deck.Count != 0)
+        if (sender.deck.Count != 0)
         {
-            place = rnd.Next(0, b.current.deck.Count);
+            place = rnd.Next(0, sender.deck.Count);
             Console.WriteLine("The exposion destorys card number " + place + " in your deck");
-            b.current.deck.RemoveAt(place);
+            sender.deck.RemoveAt(place);
         }
-        place = rnd.Next(0, b.current.hand.Count);
+        place = rnd.Next(0, sender.hand.Count);
         Console.WriteLine("The exposion destroys card number " + place + " in your hand");
-        b.current.hand.RemoveAt(place);
+        sender.hand.RemoveAt(place);
     });
 
     static Unit FB2 = new(
@@ -1325,11 +1334,11 @@ class DataBase
     id: 601,
     taunt: true,
     faction: Faction.Beast,
-    lastWords: (b, Card) =>
+    lastWords: (sender, b, Card) =>
         {
             Random rnd = new Random();
             int temp = 0;
-            if (b.current.board.Contains(Card))
+            if (sender.board.Contains(Card))
             {
                 for (int i = 0; i < 8; i++)
                 {
@@ -1416,6 +1425,10 @@ class DataBase
         lookup.Add(t4.id, t4);
         lookup.Add(t5.id, t5);
         lookup.Add(t6.id, t6);
+        lookup.Add(t7.id, t7);
+        lookup.Add(t8.id, t8);
+
+
         //FinalBoss:
         lookup.Add(FB1.id, FB1);
         lookup.Add(FB2.id, FB2);
@@ -1445,9 +1458,9 @@ class DataBase
         //UNDEAD:
         lookup.Add(u1.id, u1);
         lookup.Add(u2.id, u2);
-        lookup.Add(u2.id, u2);
         lookup.Add(u3.id, u3);
         lookup.Add(u4.id, u4);
+        lookup.Add(u5.id, u5);
         lookup.Add(u6.id, u6);
         lookup.Add(u7.id, u7);
         lookup.Add(u8.id, u8);

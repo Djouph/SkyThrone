@@ -1,16 +1,18 @@
 using System.Text.Json;
 
-abstract class Card
+public abstract class Card
 {
     public string name;
     public string description;
     public readonly int id;
+    public string imgUrl;
 
-    public Card(string name, string description, int id)
+    public Card(string name, string description, int id, string imgUrl = "")
     {
         this.name = name;
         this.description = description;
         this.id = id;
+        this.imgUrl = imgUrl;
     }
 
     public abstract Card Clone();
@@ -24,11 +26,15 @@ class Unit : Card
     public Faction faction;
     public bool HolyGuard;
     public bool taunt;
-    private Action<int, Board, Unit> takeDamage;
-    private Action<Board, Unit> adrenaline;
-    private Action<Board, Unit> onDeploy;
-    private Action<Board, Unit> lastWords;
-    public Unit(int cost, string name, string description, int attack, int Health, Faction faction, int id, bool taunt = false, bool HolyGuard = false, Action<Board, Unit> lastWords = null!, Action<int, Board, Unit> takeDamage = null!, Action<Board, Unit> adrenaline = null!, Action<Board, Unit> onDeploy = null!) : base(name, description, id)
+    private Action<PlayableUser, int, Board, Unit> takeDamage;
+    private Action<PlayableUser, Board, Unit> adrenaline;
+    private Action<PlayableUser, Board, Unit> onDeploy;
+    private Action<PlayableUser, Board, Unit> lastWords;
+    public Unit(int cost, string name, string description, int attack, int Health, Faction faction, int id, string imgUrl = "null.png", bool taunt = false, bool HolyGuard = false,
+        Action<PlayableUser, Board, Unit> lastWords = null!,
+        Action<PlayableUser, int, Board, Unit> takeDamage = null!,
+        Action<PlayableUser, Board, Unit> adrenaline = null!,
+        Action<PlayableUser, Board, Unit> onDeploy = null!) : base(name, description, id, imgUrl)
     {
         this.faction = faction;
         this.cost = cost;
@@ -43,7 +49,7 @@ class Unit : Card
         this.taunt = taunt;
     }
 
-    public virtual bool TakeDamage(int damage, Board b)
+    public virtual bool TakeDamage(PlayableUser owner, int damage, Board b)
     {
         if (takeDamage == null)
         {
@@ -63,18 +69,18 @@ class Unit : Card
         }
         else
         {
-            takeDamage.Invoke(damage, b, this);
+            takeDamage.Invoke(owner, damage, b, this);
         }
         return false;
     }
 
-    public virtual void LastWords(Board board)
+    public virtual void LastWords(PlayableUser owner, Board board)
     {
         //empty so card without lastwords wont do anything
 
         if (lastWords != null)
         {
-            lastWords.Invoke(board, this);
+            lastWords.Invoke(owner, board, this);
         }
     }
 
@@ -84,27 +90,27 @@ class Unit : Card
         //need to add that it sends the attack to the cards
     }
 
-    public virtual void Adrenaline(Board board)
+    public virtual void Adrenaline(PlayableUser owner, Board board)
     {
         if (adrenaline != null)
         {
-            adrenaline.Invoke(board, this);
+            adrenaline.Invoke(owner, board, this);
         }
         //empty so card without adrenaline wont do anything, and access to the  board if it need it
     }
 
-    public virtual void OnDeploy(Board board)
+    public virtual void OnDeploy(PlayableUser owner, Board board)
     {
         if (onDeploy != null)
         {
-            onDeploy.Invoke(board, this);
+            onDeploy.Invoke(owner, board, this);
         }
         //empty so card without ondep wont do anything
     }
 
     public override Card Clone()
     {
-        return new Unit(cost, name, description, attack, Health, faction, id, taunt, HolyGuard, lastWords, takeDamage, adrenaline, onDeploy);
+        return new Unit(cost, name, description, attack, Health, faction, id, imgUrl, taunt, HolyGuard, lastWords, takeDamage, adrenaline, onDeploy);
     }
 
     public override string ToString()
@@ -121,21 +127,32 @@ class Unit : Card
 
 class InstaPlay : Card
 {
-    private Action<Board> onDraw;
-    public InstaPlay(string name, string description, int id, Action<Board> onDraw) : base(name, description, id)
+    private Action<PlayableUser, Board> onDraw;
+    public InstaPlay(string name, string description, int id, Action<PlayableUser, Board> onDraw, string imgUrl = "null.png") : base(name, description, id, imgUrl)
     {
         this.onDraw = onDraw;
     }
 
     public override Card Clone()
     {
-        return new InstaPlay(name, description, id, onDraw);
+        return new InstaPlay(name, description, id, onDraw, imgUrl);
     }
 
-    public virtual void OnDraw(Board board)
+    public virtual void OnDraw(PlayableUser sender, Board board)
     {
-        onDraw.Invoke(board);
+        onDraw.Invoke(sender, board);
         //send what the card does then destroy it
+    }
+
+    public override string ToString()
+    {
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,      // pretty JSON
+            IncludeFields = true       // include public fields like attack, cost, etc.
+        };
+
+        return JsonSerializer.Serialize(this, options);
     }
 }
 

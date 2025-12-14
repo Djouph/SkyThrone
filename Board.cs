@@ -1,34 +1,38 @@
-﻿using System.Net.NetworkInformation;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Net.NetworkInformation;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 class Program
 {
-    static void Main()
+    static async Task Main()
     {
-        PlayableUser p = new Player(1, new() { 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, });
-        PlayableUser e = new Player(2, new() { 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, });
-        Enemy ToturialEnemy = new Enemy(3, new() { });
-        Board board = new Board(p, e);
-        board.GameStart();
+        HttpServer.RunHttpDownloadServerAsync([]);
 
         string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         string path = Path.Combine(desktop, "test.txt");
 
         using (StreamWriter writer = new StreamWriter(path, append: true))
         {
-            for (int i = 1; i < 56; i++)
+            foreach (var kvp in DataBase.lookup)
             {
-                writer.WriteLine(DataBase.CardFromId(i).ToString() + ",");
+                writer.WriteLine(kvp.Value.ToString() + ",");
             }
         }
+
+        PlayableUser p = new Player(1, new() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 201, 202, 203, 204, 205, 206, 207, 208, 2, 10, });
+        PlayableUser e = new Enemy(2, new() { 300, 301, 302, 303, 304, 305, 306, 307, 308, 300, 301, 302, 303, 304, 305, 306, 307, 308, 10, 10, });
+        Enemy ToturialEnemy = new Enemy(3, new() { });
+        Board board = new Board(p, e);
+        board.GameStart();
+
+
 
 
         while (board.p.health != 0 || board.e.health != 0)
         {
-            Console.WriteLine("PLAYER PREP PHASE");
-            board.PreparationPhase();
-            Console.WriteLine("ENEMY PREP PHASE");
-            board.PreparationPhase();
+            Console.WriteLine("PREP PHASE:");
+            await board.PreparationPhase();
             Console.WriteLine("ATTAAAAAAAAAAACK");
             board.BattlePhase();
             Console.WriteLine("END:");
@@ -50,36 +54,50 @@ class Program
 }
 
 
+
 class Board
 {
     public PlayableUser p;
     public PlayableUser e;
-    public PlayableUser current;
-    public PlayableUser other;
+    // public PlayableUser current;
+    // public PlayableUser other;
     const int StartingHand = 3;
     public bool playerturn;
     public Board(PlayableUser p, PlayableUser e)
     {
         this.p = p;
         this.e = e;
-        current = p;
-        other = e;
     }
 
-    public void Play(Unit unit)
+    public PlayableUser FindOther(PlayableUser sender)
     {
-        if (current.energy < unit.cost)
+        PlayableUser other;
+        if (sender == p)
+        {
+            other = e;
+        }
+        else
+        {
+            other = p;
+        }
+        return other;
+    }
+    public void Play(PlayableUser sender, Unit unit)
+    {
+        if (sender.energy < unit.cost)
         {
             Console.WriteLine("that costs too much energy");
         }
         else
         {
-            if (current.board.Count < 7)
+            if (sender.board.Count < 7)
             {
-                current.energy -= unit.cost;
-                current.board.Add(unit);
-                current.hand.Remove(unit);
-                unit.OnDeploy(this);
+                sender.energy -= unit.cost;
+                sender.board.Add(unit);
+                sender.hand.Remove(unit);
+
+                var owner = GetUserFromUnit(unit);
+                unit.OnDeploy(owner, this);
             }
             else
             {
@@ -101,54 +119,58 @@ class Board
 
     public void kill(Unit u)
     {
-        u.LastWords(this);
+        var owner = GetUserFromUnit(u);
+        u.LastWords(owner, this);
         e.board.Remove(u);
         p.board.Remove(u);
     }
 
-    public void Remove(int place)
+    public void Remove(PlayableUser sender, int place)
     {
-        current.deck.RemoveAt(place);
+        sender.deck.RemoveAt(place);
     }
-    public void Discard(int place)
+    public void Discard(PlayableUser sender, int place)
     {
-        current.hand.RemoveAt(place);
+        sender.hand.RemoveAt(place);
     }
-    public void Draw()
+    public void Draw(PlayableUser user)
     {
-
-
-        if (current.hand.Count == current.MaxHandSize)
+        if (user.hand.Count == user.MaxHandSize)
         {
-
             Console.WriteLine("maxerror");
-            if (current.deck.Count != 0)
+            if (user.deck.Count != 0)
             {
-                current.deck.RemoveAt(0);
+                user.deck.RemoveAt(0);
             }
 
         }
         else
         {
-            if (current.deck.Count == 0)
+            if (user.deck.Count == 0)
             {
                 Console.WriteLine("You are out of cards");
-                current.health--;
+                user.health--;
             }
-            else if (current.deck[0] is InstaPlay)
+            else if (user.deck[0] is InstaPlay)
             {
-                InstaPlay ip = (InstaPlay)current.deck[0];
-                Remove(0);
-                ip.OnDraw(this);
-                Draw();
+                InstaPlay ip = (InstaPlay)user.deck[0];
+                Remove(user, 0);
+                ip.OnDraw(user, this);
+                Draw(user);
 
             }
             else
             {
-                current.hand.Add(current.deck[0]);
-                current.deck.RemoveAt(0);
+                user.hand.Add(user.deck[0]);
+                user.deck.RemoveAt(0);
             }
         }
+    }
+
+    public PlayableUser GetUserFromUnit(Unit u)
+    {
+        if (e.board.Contains(u) || e.hand.Contains(u)) return e;
+        return p;
     }
 
     public void Build()
@@ -185,10 +207,10 @@ class Board
         }
     }
 
-    public void Infeltrait(int id)
+    public void Infeltrait(PlayableUser sender, int id)
     {
         Random rnd = new Random();
-
+        PlayableUser other = FindOther(sender);
         int random = rnd.Next(0, other.deck.Count);
         other.deck.Insert(random, DataBase.CardFromId(id));
 
@@ -201,84 +223,18 @@ class Board
         e.health = 20;
         for (int i = 0; i < StartingHand; i++)
         {
-            Draw();
-            current = e;
-            other = p;
-            Draw();
-            current = p;
-            other = e;
+            Draw(p);
+            Draw(e);
         }
         p.board = [];
         e.board = [];
     }
 
 
-    public void PreparationPhase()
+    public async Task PreparationPhase()
     {
-        bool endPhase = false;
-        if (current.maxenergy < current.MaxEnergy)
-        {
-            current.maxenergy += 1;
-        }
-        current.energy = current.maxenergy;
-        Draw();
-        while (!endPhase)
-        {
-            Console.WriteLine("your energy:" + current.energy);
-            Console.WriteLine("hand:");
-            for (int i = 0; i < current.hand.Count; i++)
-            {
-                Console.Write(current.hand[i].name + " (" + ((Unit)current.hand[i]).cost + ")" + " ,");
-            }
-            Console.WriteLine();
-            Console.WriteLine("your board:");
-            for (int i = 0; i < current.board.Count; i++)
-            {
-                Console.Write(current.board[i].name + ",");
-            }
-            Console.WriteLine();
-            Console.WriteLine("You have " + current.deck.Count + " cards in your deck");
-            Console.WriteLine();
-
-            Console.WriteLine("what card do you want to play? (0 = Dont play anything)");
-            int cardplay = int.Parse(Console.ReadLine()!) - 1;
-            if (cardplay == -1)
-            {
-                break;
-            }
-            else
-            {
-                Console.WriteLine("do you want to play this card or view it? p/v");
-                if (char.Parse(Console.ReadLine()!) == 'p')
-                {
-                    current.LastFaction = ((Unit)current.hand[cardplay]).faction;
-                    Play((Unit)current.hand[cardplay]);
-
-                }
-                else if (char.Parse(Console.ReadLine()!) == 'v')
-                {
-                    Console.WriteLine(current.hand[cardplay].description);
-                }
-            }
-
-
-            Console.WriteLine(" do you want to end your turn? yes/no");
-            if (Console.ReadLine() == "yes")
-            {
-                endPhase = true;
-            }
-        }
-
-        if (current == p)
-        {
-            current = e;
-            other = p;
-        }
-        else
-        {
-            current = p;
-            other = e;
-        }
+        await p.Prepere(this);
+        await e.Prepere(this);
     }
 
     public List<AttackData> BattlePhase()
@@ -297,17 +253,11 @@ class Board
 
         void ActivateAdrenaline(PlayableUser p)
         {
-            if (current != p)
-            {
-                PlayableUser temp = current;
-                current = p;
-                other = temp;
-            }
-
             for (int i = 0; i < p.board.Count; i++)
             {
                 Unit u = (Unit)p.board[i];
-                u.Adrenaline(this);
+                var owner = GetUserFromUnit(u);
+                u.Adrenaline(owner, this);
             }
         }
 
@@ -330,7 +280,7 @@ class Board
                 temp.dest = deadIndex;
                 temp.attackerplayerId = attacker.playerId;
                 attackdata.Add(temp);
-                enemyDied = enemyTaunt.TakeDamage(currentUnit.attack, this);
+                enemyDied = enemyTaunt.TakeDamage(enemy, currentUnit.attack, this);
             }
             else
             {
@@ -350,7 +300,7 @@ class Board
                 temp.dest = position;
                 temp.attackerplayerId = attacker.playerId;
                 attackdata.Add(temp);
-                enemyDied = enemyCard.TakeDamage(currentUnit.attack, this);
+                enemyDied = enemyCard.TakeDamage(enemy, currentUnit.attack, this);
                 deadIndex = position;
             }
 
@@ -376,9 +326,6 @@ class Board
             DoAttack(shortest, longest, ref shortIndex, ref longIndex);
             DoAttack(longest, shortest, ref longIndex, ref shortIndex);
         }
-
-        current = p;
-        other = e;
 
         return attackdata;
     }

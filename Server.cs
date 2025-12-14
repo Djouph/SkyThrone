@@ -1,10 +1,99 @@
+using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+
+public class HttpServer
+{
+    public static void ZipAllCardImages(IReadOnlyDictionary<int, Card> cards, string imagesDir, string outputZipPath)
+    {
+        if (cards is null) throw new ArgumentNullException(nameof(cards));
+        if (string.IsNullOrWhiteSpace(imagesDir)) throw new ArgumentException("imagesDir is required.", nameof(imagesDir));
+
+        Directory.CreateDirectory(Path.GetDirectoryName(outputZipPath) ?? ".");
+        if (File.Exists(outputZipPath)) File.Delete(outputZipPath);
+
+        using var zipFs = new FileStream(outputZipPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        using var zip = new ZipArchive(zipFs, ZipArchiveMode.Create);
+
+        foreach (var (cardId, card) in cards)
+        {
+            // Prefer the dictionary key as the ID source (it’s the authoritative one)
+            var fileName = GetFileNameFromUrlOrPath(card.imgUrl);
+            var srcPath = Path.Combine(imagesDir, fileName);
+
+            if (!File.Exists(srcPath))
+                throw new FileNotFoundException($"Image not found for card {cardId}: {srcPath}", srcPath);
+
+            var imgEntry = $"img_{cardId}.png";
+            var jsonEntry = $"json_{cardId}.json";
+            var inge = zip.CreateEntry(imgEntry, CompressionLevel.Optimal);
+            var carde = zip.CreateEntry(jsonEntry, CompressionLevel.Optimal);
+
+            using var entryStream = inge.Open();
+            using var imgStream = File.OpenRead(srcPath);
+            imgStream.CopyTo(entryStream);
+
+            using var cardstream = carde.Open();
+            using (var writer = new StreamWriter(cardstream))
+            {
+                writer.Write(card.ToString());
+            }
+
+        }
+    }
+
+    private static string GetFileNameFromUrlOrPath(string imgUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imgUrl))
+            throw new ArgumentException("ImgUrl is empty.");
+
+        // Works for: "/images/a.png", "images/a.png", "a.png", "http://x/y/a.png"
+        if (Uri.TryCreate(imgUrl, UriKind.Absolute, out var uri))
+            return Path.GetFileName(uri.LocalPath);
+
+        return Path.GetFileName(imgUrl.Replace('\\', '/'));
+    }
+
+    static public async Task RunHttpDownloadServerAsync(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+
+        // Project/app root (in dev = your .csproj folder)
+        var root = builder.Environment.ContentRootPath;
+
+        // Everything local to the project
+        var imagesDir = Path.Combine(root, "images");               // ./images
+        var zipPath = Path.Combine(root, "downloads", "images.zip"); // ./downloads/images.zip
+
+        var app = builder.Build();
+
+        // GET /update -> streams the zip
+        app.MapGet("/update", () =>
+        {
+
+            Directory.CreateDirectory(Path.GetDirectoryName(zipPath)!);
+            ZipAllCardImages(DataBase.lookup, imagesDir, zipPath);
+
+
+            return Results.File(
+                path: zipPath,
+                contentType: "application/zip",
+                fileDownloadName: "images.zip",
+                enableRangeProcessing: true
+            );
+        });
+
+        app.MapGet("/", () => "OK");
+
+        await app.RunAsync();
+    }
+}
+
 public class TcpServer
 {
-    public void Run()
+    public async void Run()
     {
         TcpListener server = null;
         try
@@ -40,9 +129,6 @@ public class TcpServer
             server?.Stop();
         }
     }
-
-
-
 
     private static void HandleClient(TcpClient client)
     {
@@ -86,7 +172,7 @@ public class TcpServer
                     var options = new JsonSerializerOptions
                     {
                         IncludeFields = true,  // This includes all fields (public and private)
-                        // DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never  // Never ignore anything
+                                               // DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never  // Never ignore anything
                     };
 
                     string json = JsonSerializer.Serialize(okJoin, options);
@@ -157,7 +243,7 @@ class RFB // Ready for battle
 /// </summary>
 public class AttackData
 {
-    public int attackerplayerId; 
+    public int attackerplayerId;
     public int src;
     public int dest;
 }

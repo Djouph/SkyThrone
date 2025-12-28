@@ -1229,7 +1229,7 @@ class DataBase
     static Unit p5 = new(
         cost: 4,
         name: "Borders capitan",
-        description: "OnDeploy: send 3 Instaplay cards in the enemy's deck called border",
+        description: "OnDeploy: send 3 border into the enemy's deck ",
         attack: 2,
         Health: 2,
         id: 500,
@@ -1244,7 +1244,7 @@ class DataBase
 
     static InstaPlay t7 = new(
     name: "border",
-    description: "*BORD!!!*",
+    description: "send a 2/2 pirate into the enemy board, if there isnt any space, give one of the enemy's pirates +2/+2",
     id: 707,
     onDraw: (sender, b) =>
     {
@@ -1420,7 +1420,7 @@ class DataBase
     {
         //Tokens:
         lookup.Add(t1.id, t1);
-        lookup.Add(t2.id, t1);
+        lookup.Add(t2.id, t2);
         lookup.Add(t3.id, t3);
         lookup.Add(t4.id, t4);
         lookup.Add(t5.id, t5);

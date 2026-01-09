@@ -12,7 +12,7 @@ class Program
             !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER")) ||
             !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER_SERVICE_ID"));
 
-        HttpServer.RunHttpDownloadServerAsync([]);
+        await HttpServer.RunHttpDownloadServerAsync([]);
 
         if (!isRender)
         {

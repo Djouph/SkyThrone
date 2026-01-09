@@ -83,6 +83,12 @@ public class HttpServer
         var app = builder.Build();
         app.UseSwagger();
         app.UseSwaggerUI();
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+            Path.Combine(app.Environment.ContentRootPath, "Images")),
+            RequestPath = "/Images"
+        });
 
         // GET /update -> streams the zip
         app.MapGet("/update", async (HttpContext context) =>

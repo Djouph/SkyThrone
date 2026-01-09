@@ -7,44 +7,38 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 public class HttpServer
 {
-    public static async Task ZipAllCardImages(IReadOnlyDictionary<int, Card> cards, string imagesDir, string outputZipPath, HttpContext context)
+    public static async Task ZipAllCardImages(
+        IReadOnlyDictionary<int, Card> cards,
+        string imagesDir,
+        HttpContext context)
     {
-        if (cards is null) throw new ArgumentNullException(nameof(cards));
-        if (string.IsNullOrWhiteSpace(imagesDir)) throw new ArgumentException("imagesDir is required.", nameof(imagesDir));
+        using var zip = new ZipArchive(context.Response.Body, ZipArchiveMode.Create, leaveOpen: true);
 
-        Directory.CreateDirectory(Path.GetDirectoryName(outputZipPath) ?? ".");
-        if (File.Exists(outputZipPath)) File.Delete(outputZipPath);
-
-        using (var zip = new ZipArchive(
-            context.Response.Body,
-            ZipArchiveMode.Create,
-            leaveOpen: true))
+        foreach (var (cardId, card) in cards)
         {
-            foreach (var (cardId, card) in cards)
+            var fileName = GetFileNameFromUrlOrPath(card.imgUrl);
+            var srcPath = Path.Combine(imagesDir, fileName);
+
+            if (!File.Exists(srcPath))
             {
-                // Prefer the dictionary key as the ID source (it’s the authoritative one)
-                var fileName = GetFileNameFromUrlOrPath(card.imgUrl);
-                var srcPath = Path.Combine(imagesDir, fileName);
-
-                if (!File.Exists(srcPath))
-                    throw new FileNotFoundException($"Image not found for card {cardId}: {srcPath}", srcPath);
-
-                // ---- IMAGE ENTRY ----
-                var imgEntry = zip.CreateEntry($"img_{cardId}.png");
-                using (var entryStream = imgEntry.Open())
-                using (var imgStream = File.OpenRead(srcPath))
-                {
-                    await imgStream.CopyToAsync(entryStream);
-                }
-
-                // ---- JSON ENTRY ----
-                var jsonEntry = zip.CreateEntry($"json_{cardId}.json");
-                using (var jsonStream = jsonEntry.Open())
-                using (var writer = new StreamWriter(jsonStream))
-                {
-                    await writer.WriteAsync(card.ToString());
-                }
+                // Don’t crash the whole download on Render
+                // either skip, or write a placeholder entry.
+                var missing = zip.CreateEntry($"missing_{cardId}.txt");
+                await using var s = missing.Open();
+                await using var w = new StreamWriter(s);
+                await w.WriteAsync($"Missing image: {srcPath}");
+                continue;
             }
+
+            var imgEntry = zip.CreateEntry($"img_{cardId}.png");
+            await using (var entryStream = imgEntry.Open())
+            await using (var imgStream = File.OpenRead(srcPath))
+                await imgStream.CopyToAsync(entryStream);
+
+            var jsonEntry = zip.CreateEntry($"json_{cardId}.json");
+            await using (var jsonStream = jsonEntry.Open())
+            await using (var writer = new StreamWriter(jsonStream))
+                await writer.WriteAsync(card.ToString());
         }
     }
 
@@ -77,7 +71,7 @@ public class HttpServer
         var root = builder.Environment.ContentRootPath;
 
         // Everything local to the project
-        var imagesDir = Path.Combine(root, "images");               // ./images
+        var imagesDir = Path.Combine(root, "Images");               // ./images
         var zipPath = Path.Combine(root, "downloads", "images.zip"); // ./downloads/images.zip
 
         var app = builder.Build();
@@ -94,11 +88,16 @@ public class HttpServer
         app.MapGet("/update", async (HttpContext context) =>
         {
             context.Response.ContentType = "application/zip";
-            context.Response.Headers["Content-Disposition"] =
-                "attachment; filename=cards.zip";
+            context.Response.Headers["Content-Disposition"] = "attachment; filename=cards.zip";
 
-            Directory.CreateDirectory(Path.GetDirectoryName(zipPath)!);
-            await ZipAllCardImages(DataBase.lookup, imagesDir, zipPath, context);
+            await ZipAllCardImages(DataBase.lookup, imagesDir, context);
+        });
+        app.MapGet("/debug-images", () =>
+        {
+            var dir = Path.Combine(app.Environment.ContentRootPath, "Images");
+            if (!Directory.Exists(dir)) return Results.Text($"No dir: {dir}");
+            var files = Directory.GetFiles(dir).Take(50);
+            return Results.Json(new { dir, count = Directory.GetFiles(dir).Length, sample = files });
         });
 
         app.MapGet("/", () => "OK");

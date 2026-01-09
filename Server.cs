@@ -69,6 +69,10 @@ public class HttpServer
             options.AllowSynchronousIO = true;
         });
 
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+
         // Project/app root (in dev = your .csproj folder)
         var root = builder.Environment.ContentRootPath;
 
@@ -77,6 +81,8 @@ public class HttpServer
         var zipPath = Path.Combine(root, "downloads", "images.zip"); // ./downloads/images.zip
 
         var app = builder.Build();
+        app.UseSwagger();
+        app.UseSwaggerUI();
 
         // GET /update -> streams the zip
         app.MapGet("/update", async (HttpContext context) =>

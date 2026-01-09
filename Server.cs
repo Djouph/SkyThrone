@@ -69,6 +69,9 @@ public class HttpServer
             options.AllowSynchronousIO = true;
         });
 
+        var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
+        builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
         // Project/app root (in dev = your .csproj folder)
         var root = builder.Environment.ContentRootPath;
 

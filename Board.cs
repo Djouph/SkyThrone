@@ -14,7 +14,7 @@ class Program
 
         HttpServer.RunHttpDownloadServerAsync([]);
 
-        if (isRender)
+        if (!isRender)
         {
             string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             string path = Path.Combine(desktop, "test.txt");

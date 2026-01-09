@@ -5,50 +5,58 @@ using System.Threading.Tasks;
 
 class Program
 {
+
     static async Task Main()
     {
+        bool isRender =
+            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER")) ||
+            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER_SERVICE_ID"));
+
         HttpServer.RunHttpDownloadServerAsync([]);
 
-        string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-        string path = Path.Combine(desktop, "test.txt");
-
-        using (StreamWriter writer = new StreamWriter(path, append: true))
+        if (isRender)
         {
-            foreach (var kvp in DataBase.lookup)
+            string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string path = Path.Combine(desktop, "test.txt");
+
+            using (StreamWriter writer = new StreamWriter(path, append: true))
             {
-                writer.WriteLine(kvp.Value.ToString() + ",");
-            }
-        }
-
-        PlayableUser p = new Player(1, new() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 201, 202, 203, 204, 205, 206, 207, 208, 2, 10, });
-        PlayableUser e = new Enemy(2, new() { 300, 301, 302, 303, 304, 305, 306, 307, 308, 300, 301, 302, 303, 304, 305, 306, 307, 308, 10, 10, });
-        Enemy ToturialEnemy = new Enemy(3, new() { });
-        Board board = new Board(p, e);
-        board.GameStart();
-
-
-
-
-        while (board.p.health != 0 || board.e.health != 0)
-        {
-            Console.WriteLine("PREP PHASE:");
-            await board.PreparationPhase();
-            Console.WriteLine("ATTAAAAAAAAAAACK");
-            board.BattlePhase();
-            Console.WriteLine("END:");
-            board.EndPhase();
-
-            if (board.p.health < 1)
-            {
-                Console.WriteLine("DEFEAT");
-                break;
-            }
-            if (board.e.health < 1)
-            {
-                Console.WriteLine("VICTORY");
-                break;
+                foreach (var kvp in DataBase.lookup)
+                {
+                    writer.WriteLine(kvp.Value.ToString() + ",");
+                }
             }
 
+            PlayableUser p = new Player(1, new() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 201, 202, 203, 204, 205, 206, 207, 208, 2, 10, });
+            PlayableUser e = new Enemy(2, new() { 300, 301, 302, 303, 304, 305, 306, 307, 308, 300, 301, 302, 303, 304, 305, 306, 307, 308, 10, 10, });
+            Enemy ToturialEnemy = new Enemy(3, new() { });
+            Board board = new Board(p, e);
+            board.GameStart();
+
+
+
+
+            while (board.p.health != 0 || board.e.health != 0)
+            {
+                Console.WriteLine("PREP PHASE:");
+                await board.PreparationPhase();
+                Console.WriteLine("ATTAAAAAAAAAAACK");
+                board.BattlePhase();
+                Console.WriteLine("END:");
+                board.EndPhase();
+
+                if (board.p.health < 1)
+                {
+                    Console.WriteLine("DEFEAT");
+                    break;
+                }
+                if (board.e.health < 1)
+                {
+                    Console.WriteLine("VICTORY");
+                    break;
+                }
+
+            }
         }
     }
 }

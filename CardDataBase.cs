@@ -5,6 +5,8 @@ using System.Runtime.Serialization;
 
 class DataBase
 {
+    public const string VERSION = "1.0.0";
+
     public static Dictionary<int, Card> lookup = new Dictionary<int, Card>();
 
     // static Unit - = new(

@@ -92,6 +92,18 @@ public class HttpServer
 
             await ZipAllCardImages(DataBase.lookup, imagesDir, context);
         });
+
+        app.MapGet("/compare-version", async (HttpContext context, string version) =>
+        {
+            context.Response.StatusCode = 200; // OK
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new
+            {
+                result = version == DataBase.VERSION,
+                version = DataBase.VERSION, // real user version
+            });
+        });
+
         app.MapGet("/debug-images", () =>
         {
             var dir = Path.Combine(app.Environment.ContentRootPath, "Images");

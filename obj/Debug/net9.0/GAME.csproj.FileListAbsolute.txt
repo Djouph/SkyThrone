@@ -53,3 +53,9 @@ C:\Users\User\Desktop\Liors New Projects\GAME\Server\obj\Debug\net9.0\staticweba
 C:\Users\User\Desktop\Liors New Projects\GAME\Server\obj\Debug\net9.0\staticwebassets\msbuild.buildMultiTargeting.GAME.props
 C:\Users\User\Desktop\Liors New Projects\GAME\Server\obj\Debug\net9.0\staticwebassets\msbuild.buildTransitive.GAME.props
 C:\Users\User\Desktop\Liors New Projects\GAME\Server\obj\Debug\net9.0\staticwebassets.pack.json
+C:\Users\User\Desktop\Liors New Projects\GAME\Server\bin\Debug\net9.0\Images\null.png
+C:\Users\User\Desktop\Liors New Projects\GAME\Server\bin\Debug\net9.0\Microsoft.OpenApi.dll
+C:\Users\User\Desktop\Liors New Projects\GAME\Server\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
+C:\Users\User\Desktop\Liors New Projects\GAME\Server\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Users\User\Desktop\Liors New Projects\GAME\Server\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Users\User\Desktop\Liors New Projects\GAME\Server\obj\Debug\net9.0\GAME.MvcApplicationPartsAssemblyInfo.cs

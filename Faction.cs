@@ -7,12 +7,12 @@ enum Faction
     Undead,
 
     Kingdom,
-   FireElementals,
-   WaterElementals,
+    FireElementals,
+    WaterElementals,
 
-   AirElementals,
+    AirElementals,
 
-   EarthElementals,
+    EarthElementals,
 
     Pirate
 }

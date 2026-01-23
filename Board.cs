@@ -9,13 +9,16 @@ class Program
     static async Task Main()
     {
         bool isRender =
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER")) ||
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER_SERVICE_ID"));
+            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("KAMATERA"));
 
-        await HttpServer.RunHttpDownloadServerAsync([]);
-
-        if (!isRender)
+        if (isRender)
         {
+            await HttpServer.RunHttpDownloadServerAsync([]);
+        }
+        else
+        {
+            HttpServer.RunHttpDownloadServerAsync([]);
+
             string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             string path = Path.Combine(desktop, "test.txt");
 

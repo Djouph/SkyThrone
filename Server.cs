@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 public class HttpServer
 {
+    // TODO: start writing comments on what each part of these lines do, until i can do a summery of the whole function, then it will be ready
     public static async Task ZipAllCardImages(
         IReadOnlyDictionary<int, Card> cards,
         string imagesDir,
@@ -206,13 +207,23 @@ public class TcpServer
 
                     byte[] response = Encoding.ASCII.GetBytes(json);
                     stream.Write(response, 0, response.Length);
+
                 }
                 else
                 {
                     // TODO : SIMULATE ENEMY PREPERATION (GEMINI API)
-
                     if (game != null)
                     {
+
+                        var rFB = JsonSerializer.Deserialize<RFB>(data);
+                        Response[] response = new Response[] { };
+                        if (rFB.cardPlayed != -1)
+                        {
+                            response = p.PlayCard(rFB, game);
+                            continue;
+                        }
+
+                        game.PreparationPhase();
 
                         game.BattlePhase(); // GET LIST OF ATTACKS (AND MAYBE ADDED CARDS) TO ANIAMTE AT THE USER SIDE.
                         game.EndPhase();
@@ -227,8 +238,9 @@ public class TcpServer
                             Console.WriteLine("VICTORY");
                             break;
                         }
+                        response = p.PlayCard(rFB, game);
 
-                        // TODO : ADD RESPONSE
+                        // TODO : send the response form the PlayCard function so the frontend can get the imformation
                     }
                 }
             }
@@ -262,7 +274,7 @@ class OkJoin
 
 class RFB // Ready for battle 
 {
-    public List<int> cardsPlayed;
+    public int cardPlayed;
 }
 
 /// <summary>

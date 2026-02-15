@@ -85,11 +85,11 @@ class Enemy : PlayableUser
     }
 }
 
-class Player : PlayableUser
+class Admin : PlayableUser
 {
     // public List<Artifact> artifacts;
 
-    public Player(int playerId, List<int> build) : base(playerId, build)
+    public Admin(int playerId, List<int> build) : base(playerId, build)
     {
 
     }
@@ -150,4 +150,89 @@ class Player : PlayableUser
             }
         }
     }
+}
+
+class Player : PlayableUser
+{
+    // public List<Artifact> artifacts;
+
+    public Player(int playerId, List<int> build) : base(playerId, build)
+    {
+
+    }
+
+
+
+
+    /// <summary>
+    /// this function requers a RFB (ready for battle) and a board,
+    /// when the player plays a card or ends their turn, 
+    /// the game will send the server the index of the card or -1 if they ended their turn, 
+    /// then it will call upon this function which will play the card or do the starting turn functions, 
+    /// the function will return a json which will have the new inforation of what happned in the following order:
+    /// energy, maxEnergy, hand, board, deck, player health.
+    /// </summary>
+    /// <param name="rfb"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
+    public Response[] PlayCard(RFB rfb, Board b)
+    {
+        List<Response> response = new();
+
+        if (rfb.cardPlayed == -1)
+        {
+            b.Draw(this);
+            if (maxenergy < MaxEnergy)
+            {
+                maxenergy++;
+            }
+            energy = maxenergy;
+        }
+        else
+        {
+            b.Play(this, (Unit)hand[rfb.cardPlayed]);
+        }
+        response.Add(new Response()
+        {
+            name = "energy",
+            payload = energy,
+        });
+        response.Add(new Response()
+        {
+            name = "maxenergy",
+            payload = maxenergy,
+        });
+        response.Add(new Response()
+        {
+            name = "hand",
+            payload = hand,
+        });
+        response.Add(new Response()
+        {
+            name = "board",
+            payload = board,
+        });
+        response.Add(new Response()
+        {
+            name = "deck",
+            payload = deck,
+        });
+        response.Add(new Response()
+        {
+            name = "playerhealth",
+            payload = health,
+        });
+        return response.ToArray();
+    }
+
+    public async override Task Prepere(Board b)
+    {
+
+    }
+}
+
+class Response
+{
+    public string name;
+    public object payload;
 }

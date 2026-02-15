@@ -5,11 +5,9 @@ using System.Threading.Tasks;
 
 class Program
 {
-
     static async Task Main()
     {
-        bool isRender =
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("KAMATERA"));
+        bool isRender = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("KAMATERA"));
 
         if (isRender)
         {
@@ -64,8 +62,6 @@ class Program
     }
 }
 
-
-
 class Board
 {
     public PlayableUser p;
@@ -80,6 +76,12 @@ class Board
         this.e = e;
     }
 
+/// <summary>
+/// FindOther is needed for many cards in the CardDataBase, 
+/// they use it to know the PlayableUser they need for their abilities
+/// </summary>
+/// <param name="sender"></param>
+/// <returns></returns>
     public PlayableUser FindOther(PlayableUser sender)
     {
         PlayableUser other;
@@ -93,6 +95,15 @@ class Board
         }
         return other;
     }
+
+/// <summary>
+    /// Play is a core function that is used to put cards on the battlefield,
+    /// it requires to know the PlayableUser that uses it and the Unit it tries to play,
+    /// the PlayableUser is needed to check if they have enough energy to play the Unit, 
+    /// and if the Unit is played, the function will call its OnDeploy to activate.
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="unit"></param>
     public void Play(PlayableUser sender, Unit unit)
     {
         if (sender.energy < unit.cost)
@@ -117,6 +128,13 @@ class Board
         }
     }
 
+/// <summary>
+/// Merge is a function that is mainly used by the Robot faction, 
+/// Merge takes 2 Units, one on the left and one on the right, 
+/// the Unit on the left takes the stats of the Unit on the right and then destroys it.
+/// </summary>
+/// <param name="u"></param>
+/// <param name="u2"></param>
     public void Merge(Unit u, Unit u2)
     {
 
@@ -128,6 +146,12 @@ class Board
 
     }
 
+/// <summary>
+/// Kill is a core game function that require a Unit, 
+/// Kill removes the Unit from the battlefield and activates their LastWords,
+/// Kill won't remove a Unit that isn't connected since every Unit is a special clone with their hidden clone id. 
+/// </summary>
+/// <param name="u"></param>
     public void kill(Unit u)
     {
         var owner = GetUserFromUnit(u);
@@ -136,14 +160,37 @@ class Board
         p.board.Remove(u);
     }
 
+/// <summary>
+/// Remove is a core game function that removes cards from the deck of a PlayableUser, 
+/// Remove requires a PlayableUser and the int of the place they are removing.
+/// </summary>
+/// <param name="sender"></param>
+/// <param name="place"></param>
     public void Remove(PlayableUser sender, int place)
     {
         sender.deck.RemoveAt(place);
     }
+
+/// <summary>
+/// Discard is a core game function that removes cards from the hand of a PlayableUser, 
+/// Remove requires a PlayableUser and the int of the card they are removing.
+/// </summary>
+/// <param name="sender"></param>
+/// <param name="place"></param>
     public void Discard(PlayableUser sender, int place)
     {
         sender.hand.RemoveAt(place);
     }
+
+/// <summary>
+/// Draw is a core game function that tries to draw a card and requires a PlayableUser, 
+/// when Draw gets a PlayableUser it will try to draw a card and will do the following effects:
+/// if the PlayableUser's hand is full it will Remove the card on the top of the PlayableUser's deck, 
+/// if the PlayableUser has an empty deck it will lower the PlayableUser's health by one, 
+/// if the top card of the PlayableUser's deck is an InstaPlay card then it will activate the OnDraw effect of the InstaPlay card and Removes it, after which it will recall the Draw function, 
+/// if non of the above happens then it will simply draw a card and add it to the PlayableUsers hand.
+/// </summary>
+/// <param name="user"></param>
     public void Draw(PlayableUser user)
     {
         if (user.hand.Count == user.MaxHandSize)
@@ -178,12 +225,23 @@ class Board
         }
     }
 
+/// <summary>
+/// This function is used by the game to get the PlayableUser of a Unit, 
+/// GetUserFromUnit requires a Unit, 
+/// GetUserFromUnit will then check the battlefield to see which PlayableUser owns the Unit and returns the PlayableUser.
+/// </summary>
+/// <param name="u"></param>
+/// <returns></returns>
     public PlayableUser GetUserFromUnit(Unit u)
     {
         if (e.board.Contains(u) || e.hand.Contains(u)) return e;
         return p;
     }
 
+/// <summary>
+/// Build is a core game function that activates every battle, 
+/// Build uses the builds of the PlayableUsers and shuffles the cards into the decks.
+/// </summary>
     public void Build()
     {
         Random rnd = new Random();
@@ -218,6 +276,14 @@ class Board
         }
     }
 
+/// <summary>
+/// Infeltrait is a function that is used mainly by the Pirate faction, 
+/// Infeltrait requires a PlayableUser and the id of a card, 
+/// Infeltrait goes to the PlayableUser that isnt the PlayableUser it was given, 
+/// and then inserts a clone of the card who's id the Infeltrait function was given in a random place in the PlayableUser's deck.
+/// </summary>
+/// <param name="sender"></param>
+/// <param name="id"></param>
     public void Infeltrait(PlayableUser sender, int id)
     {
         Random rnd = new Random();
@@ -227,6 +293,13 @@ class Board
 
     }
 
+/// <summary>
+/// GameStart is a core game function that starts each battle, 
+/// when called it will call on the Build function, 
+/// reset the health of the PlayableUsers back to 20, 
+/// Draws cards until both the PlayableUsers have their starting hands, 
+/// and resets the battlefields.
+/// </summary>
     public void GameStart()
     {
         Build();
@@ -241,13 +314,22 @@ class Board
         e.board = [];
     }
 
-
+/// <summary>
+/// The PreparationPhase functions is a core game function that calls the PlayableUsers prepere.
+/// </summary>
+/// <returns></returns>
     public async Task PreparationPhase()
     {
         await p.Prepere(this);
         await e.Prepere(this);
     }
 
+/// <summary>
+/// The BattlePhase is a core game function that is a big part of the main game (the combat) and uses multiple nested functions, 
+/// First it will call on a nested function called ActivateAdrenaline, this nested function will call all the adrenaline of the cards in the battlefields (starting with the Player), 
+/// then it will start having all the Units attack each other using a nested function called DoAttack.
+/// </summary>
+/// <returns></returns>
     public List<AttackData> BattlePhase()
     {
         List<AttackData> attackdata = new();
@@ -341,8 +423,13 @@ class Board
         return attackdata;
     }
 
-
-
+/// <summary>
+/// EndPhase function is a core game function that checks the health win condition, 
+/// when the BattlePhase function ends with one side victories, that side's remaining Units will attack the other PlayableUser's health, 
+/// if their health is lowered to or below 0, then that PlayableUser is defeated and the other PlayableUser has won, 
+/// during the function, a List of AttackData will be made to send to the frontend so the player will see what happened.
+/// </summary>
+/// <returns></returns>
     public List<AttackData> EndPhase()
     {
         List<AttackData> attackData = new();

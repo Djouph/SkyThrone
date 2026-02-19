@@ -13,7 +13,7 @@ class Api
 
     static public async Task<string> Play(Board game, string command)
     {
-        var apiKey = "AIzaSyAaoFqvDwzhZU-6BvpHpiPsD063pGnf9FU";
+        var apiKey = "AIzaSyD9V-jQdXf9U8_PTiPB-giSc1DsIY57WOo";
 
         // 2. Create HTTP client and request body
         using var client = new HttpClient();

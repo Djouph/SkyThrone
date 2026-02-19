@@ -83,6 +83,11 @@ class Enemy : PlayableUser
             }
         }
     }
+
+    public Enemy Clone()
+    {
+        return new Enemy(playerId, [.. build]);
+    }
 }
 
 class Admin : PlayableUser
@@ -165,7 +170,7 @@ class Player : PlayableUser
 
 
     /// <summary>
-    /// this function requers a RFB (ready for battle) and a board,
+    /// this function requires a RFB (ready for battle) and a board,
     /// when the player plays a card or ends their turn, 
     /// the game will send the server the index of the card or -1 if they ended their turn, 
     /// then it will call upon this function which will play the card or do the starting turn functions, 
@@ -205,17 +210,17 @@ class Player : PlayableUser
         response.Add(new Response()
         {
             name = "hand",
-            payload = hand,
+            payload = hand.Select((c) => c.id).ToList(),
         });
         response.Add(new Response()
         {
             name = "board",
-            payload = board,
+            payload = board.Select((c) => c.id).ToList(),
         });
         response.Add(new Response()
         {
             name = "deck",
-            payload = deck,
+            payload = deck.Select((c) => c.id).ToList(),
         });
         response.Add(new Response()
         {

@@ -121,7 +121,7 @@ public class HttpServer
 
 public class TcpServer
 {
-    public async void Run()
+    public async Task Run()
     {
         TcpListener server = null;
         try
@@ -169,91 +169,109 @@ public class TcpServer
         Enemy? e = null;
         Board? game = null;
 
-        try
+        // try
+        // {
+        while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) != 0)
         {
-            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) != 0)
+            // Translate data bytes to a ASCII string
+            string data = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+            if (request == null)
             {
-                // Translate data bytes to a ASCII string
-                string data = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-
-                if (request == null)
+                var options = new JsonSerializerOptions
                 {
-                    request = JsonSerializer.Deserialize<JoinRequest>(data);
-                    if (request == null) break; // TODO : SEND ERROR RESPONSE
+                    IncludeFields = true,  // This includes all fields (public and private)
+                                           // DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never  // Never ignore anything
+                };
+                request = JsonSerializer.Deserialize<JoinRequest>(data, options);
+                // Console.WriteLine(JsonSerializer(request));
+                if (request == null) break; // TODO : SEND ERROR RESPONSE
 
-                    // TODO : CHECK IF THE PLAYER CAN PLAY THE SELECTED LEVEL
+                // TODO : CHECK IF THE PLAYER CAN PLAY THE SELECTED LEVEL
 
-                    const int playerId = 20000;
-                    const int enemeyId = 10000;
+                const int playerId = 20000;
+                const int enemeyId = 600;
 
-                    p = new Player(playerId, request.build);
-                    e = new Enemy(enemeyId, request.build);
-                    game = new Board(p, e);
+                p = new Player(playerId, request.build);
+                Console.WriteLine(p.build[1]);
+                e = EnemyDataBase.EnemyFromEnemyId(enemeyId);
+                game = new Board(p, e);
+                game.GameStart();
 
-                    // Echo back the data
-                    OkJoin okJoin = new OkJoin()
-                    {
-                        e = e,
-                        playerId = playerId, // temp const id for now (Change later)
-                    };
+                // Echo back the data
+                OkJoin okJoin = new OkJoin()
+                {
+                    e = e,
+                    playerId = playerId, // temp const id for now (Change later)
+                };
+
+
+                string json = JsonSerializer.Serialize(okJoin, options);
+
+                byte[] response = Encoding.ASCII.GetBytes(json);
+                stream.Write(response, 0, response.Length);
+
+            }
+            else
+            {
+                // TODO : SIMULATE ENEMY PREPERATION (GEMINI API)
+                if (game != null)
+                {
 
                     var options = new JsonSerializerOptions
                     {
                         IncludeFields = true,  // This includes all fields (public and private)
                                                // DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never  // Never ignore anything
                     };
+                    var rFB = JsonSerializer.Deserialize<RFB>(data, options);
+                    Response[] objresponse = new Response[] { };
+                    String json;
+                    byte[] byteresponse;
 
-                    string json = JsonSerializer.Serialize(okJoin, options);
-
-                    byte[] response = Encoding.ASCII.GetBytes(json);
-                    stream.Write(response, 0, response.Length);
-
-                }
-                else
-                {
-                    // TODO : SIMULATE ENEMY PREPERATION (GEMINI API)
-                    if (game != null)
+                    if (rFB.cardPlayed != -1)
                     {
-
-                        var rFB = JsonSerializer.Deserialize<RFB>(data);
-                        Response[] response = new Response[] { };
-                        if (rFB.cardPlayed != -1)
-                        {
-                            response = p.PlayCard(rFB, game);
-                            continue;
-                        }
-
-                        game.PreparationPhase();
-
-                        game.BattlePhase(); // GET LIST OF ATTACKS (AND MAYBE ADDED CARDS) TO ANIAMTE AT THE USER SIDE.
-                        game.EndPhase();
-
-                        if (game.p.health < 1)
-                        {
-                            Console.WriteLine("DEFEAT");
-                            break;
-                        }
-                        if (game.e.health < 1)
-                        {
-                            Console.WriteLine("VICTORY");
-                            break;
-                        }
-                        response = p.PlayCard(rFB, game);
-
-                        // TODO : send the response form the PlayCard function so the frontend can get the imformation
+                        objresponse = p.PlayCard(rFB, game);
+                        json = JsonSerializer.Serialize(objresponse, options);
+                        byteresponse = Encoding.ASCII.GetBytes(json);
+                        stream.Write(byteresponse, 0, byteresponse.Length);
+                        continue;
                     }
+
+                    game.PreparationPhase();
+
+                    game.BattlePhase(); // GET LIST OF ATTACKS (AND MAYBE ADDED CARDS) TO ANIAMTE AT THE USER SIDE.
+                    game.EndPhase();
+
+                    if (game.p.health < 1)
+                    {
+                        Console.WriteLine("DEFEAT");
+                        break;
+                    }
+                    if (game.e.health < 1)
+                    {
+                        Console.WriteLine("VICTORY");
+                        break;
+                    }
+                    objresponse = p.PlayCard(rFB, game);
+                    json = JsonSerializer.Serialize(objresponse, options);
+                    byteresponse = Encoding.ASCII.GetBytes(json);
+                    stream.Write(byteresponse, 0, byteresponse.Length);
+
+
+                    // TODO : send the response form the PlayCard function so the frontend can get the imformation
                 }
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error handling client: {ex.Message}");
-        }
-        finally
-        {
-            client.Close();
-            Console.WriteLine("Client disconnected.");
-        }
+        // }
+        // catch (Exception ex)
+        // {
+        //     Console.WriteLine($"Error handling client: {ex.Message}");
+        // }
+        // finally
+        // {
+        //     client.Close();
+        //     Console.WriteLine("Client disconnected.");
+        // }
     }
 }
 

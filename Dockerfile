@@ -12,5 +12,5 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build /app/out .
 
-ENV ASPNETCORE_URLS=http://0.0.0.0:3000
+ENV ASPNETCORE_URLS=http://0.0.0.0:5000
 CMD ["dotnet", "GAME.dll"]

@@ -126,8 +126,8 @@ public class TcpServer
         TcpListener server = null;
         try
         {
-            IPAddress localAddr = IPAddress.Parse("127.0.0.1"); // Loopback address
-            int port = 13000;
+            IPAddress localAddr = IPAddress.Parse("185.181.10.185"); // Loopback address
+            int port = 3000;
 
             server = new TcpListener(localAddr, port);
 

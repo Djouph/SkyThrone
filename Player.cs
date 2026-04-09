@@ -228,8 +228,14 @@ class Player : PlayableUser
             payload = health,
         });
 
+        var options = new JsonSerializerOptions
+        {
+            IncludeFields = true,  // This includes all fields (public and private)
+                                   // DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never  // Never ignore anything
+        };
+
         Console.WriteLine();
-        Console.WriteLine(JsonSerializer.Serialize(response));
+        Console.WriteLine(JsonSerializer.Serialize(response, options));
         Console.WriteLine();
 
 

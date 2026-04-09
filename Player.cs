@@ -227,6 +227,12 @@ class Player : PlayableUser
             name = "playerhealth",
             payload = health,
         });
+
+        Console.WriteLine();
+        Console.WriteLine(JsonSerializer.Serialize(response));
+        Console.WriteLine();
+
+
         return response.ToArray();
     }
 

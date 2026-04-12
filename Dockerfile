@@ -14,7 +14,6 @@ COPY --from=build /app/out .
 
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
 
-# 👇 expose it (important for clarity, not strictly required)
 EXPOSE 8080
 
 CMD ["dotnet", "GAME.dll"]

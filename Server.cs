@@ -115,7 +115,7 @@ public class HttpServer
 
         app.MapGet("/", () => "OK");
 
-        await app.RunAsync();
+        app.RunAsync(); // dont await so we can start the tcp server
     }
 }
 

@@ -8,6 +8,8 @@ class Program
     static async Task Main()
     {
         TcpServer server = new();
+        
+        HttpServer.RunHttpDownloadServerAsync([]);
 
         await server.Run();
 

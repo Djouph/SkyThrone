@@ -119,7 +119,7 @@ public class HttpServer
     }
 }
 
-public class TcpServer
+class TcpServer
 {
     public async Task Run()
     {

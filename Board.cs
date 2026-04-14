@@ -9,10 +9,9 @@ class Program
     {
         TcpServer server = new();
 
-        HttpServer.RunHttpDownloadServerAsync([]);
-
         System.Console.WriteLine("started both servers");
-        await server.Run();
+
+        Task.WaitAll(HttpServer.RunHttpDownloadServerAsync([]), server.Run());
 
         //     bool isRender = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("KAMATERA"));
 

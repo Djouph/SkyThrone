@@ -127,7 +127,7 @@ class TcpServer
         try
         {
             IPAddress localAddr = IPAddress.Any; // Loopback address
-            int port = 5000;
+            int port = 5001;
 
             server = new TcpListener(localAddr, port);
 

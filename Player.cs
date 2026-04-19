@@ -28,8 +28,8 @@ abstract class PlayableUser
         MaxBoardSize = 6;
         MaxHandSize = 11;
         StartingHand = 3;
-        energy = 0;
-        maxenergy = 0;
+        energy = 1;
+        maxenergy = 1;
         health = 20;
         MaxEnergy = 10;
         LastFaction = null;

@@ -38,6 +38,7 @@ class DataBase
     description: "OnDeploy: draw a card",
     attack: 1,
     Health: 2,
+    imgUrl: "carrier hedgehog.png",
     id: 10,
 
     faction: Faction.Small,
@@ -54,6 +55,7 @@ class DataBase
        description: "Adrenaline: get +1 attack",
        attack: 1,
        Health: 2,
+       imgUrl: "evilhedgehog.png",
        id: 1,
        faction: Faction.Small,
        adrenaline: (sender, b, Card) =>
@@ -69,6 +71,7 @@ class DataBase
        description: "no nut, no mercy!",
        attack: 1,
        Health: 1,
+       imgUrl: "SquirrelScout.png",
        id: 2,
        faction: Faction.Small
        );
@@ -80,6 +83,7 @@ class DataBase
        description: "adrenaline: give 3 random enemy units -1 attack",
        attack: 2,
        Health: 3,
+       imgUrl: "owl.png",
        id: 3,
        faction: Faction.Small,
        adrenaline: (sender, b, Card) =>
@@ -1293,6 +1297,7 @@ class DataBase
     description: "OnDeploy: place an Instaplay card in the enemy's deck called doom charge",
     attack: 2,
     Health: 2,
+    imgUrl: "BlastCharger_Art.png",
     id: 600,
     faction: Faction.Beast,
     onDeploy: (sender, b, Card) =>

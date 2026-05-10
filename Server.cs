@@ -4,6 +4,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
 
 public class HttpServer
 {
@@ -67,6 +69,9 @@ public class HttpServer
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+        builder.Services.AddDbContext<DataContext>(options =>
+            options.UseSqlite(
+                builder.Configuration.GetConnectionString("database.db")));
 
         // Project/app root (in dev = your .csproj folder)
         var root = builder.Environment.ContentRootPath;
@@ -111,6 +116,51 @@ public class HttpServer
             if (!Directory.Exists(dir)) return Results.Text($"No dir: {dir}");
             var files = Directory.GetFiles(dir).Take(50);
             return Results.Json(new { dir, count = Directory.GetFiles(dir).Length, sample = files });
+        });
+
+        //when this is called upon, it will get a name and password. Then it will check there isnt already a User with said name.
+        //If not it will create a new User with the provided details.
+        //If there is a User with that name it will ask for another one 
+        app.MapGet("/sign-up", async (string Username, string Password, DataContext context) =>
+        {
+            var exists = await context.Users
+                .AnyAsync(x => x.Username == Username);
+
+            if (exists)
+            {
+                return Results.BadRequest("Username already exists");
+            }
+
+            var user = new User()
+            {
+                Username = Username,
+                Password = Password,
+                Deck = []
+            };
+
+            context.Users.Add(user);
+
+            await context.SaveChangesAsync();
+
+            return Results.Ok(user);
+        });
+
+        //When this is called upon, it will get a name and password. Then it will check there is a User with the same details.
+        //If there is a User with said details then it will log them in.
+        //If there isn't then it will ask for a new name and password and suggest to sign up
+        app.MapGet("/sign-in", async (string Username, string Password, DataContext context) =>
+        {
+            var user = await context.Users
+                .FirstOrDefaultAsync(x =>
+                    x.Username == Username &&
+                    x.Password == Password);
+
+            if (user == null)
+            {
+                return Results.BadRequest("Invalid username or password");
+            }
+
+            return Results.Ok(user);
         });
 
         app.MapGet("/", () => "OK");

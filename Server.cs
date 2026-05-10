@@ -89,6 +89,8 @@ public class HttpServer
             Path.Combine(app.Environment.ContentRootPath, "Images")),
             RequestPath = "/Images"
         });
+        var db = app.Services.GetRequiredService<DataContext>();
+        db.Database.EnsureCreated();
 
         // GET /update -> streams the zip
         app.MapGet("/update", async (HttpContext context) =>

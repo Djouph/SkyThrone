@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 class Program
 {
-    static async Task Main()
+    static void Main()
     {
         TcpServer server = new();
 

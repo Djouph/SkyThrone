@@ -76,8 +76,7 @@ public class HttpServer
 
             options.UseMySql(
                 connectionString,
-                ServerVersion.AutoDetect(connectionString)
-            );
+                new MySqlServerVersion(new Version(8, 0, 36)));
         });
 
         builder.WebHost.UseUrls("http://0.0.0.0:8080");
@@ -98,8 +97,20 @@ public class HttpServer
             Path.Combine(app.Environment.ContentRootPath, "Images")),
             RequestPath = "/Images"
         });
-        var db = app.Services.GetRequiredService<DataContext>();
-        db.Database.EnsureCreated();
+
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+            db.Database.EnsureCreated();
+            Console.WriteLine("DB ready");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("DB init failed (non-fatal):");
+            Console.WriteLine(ex);
+        }
 
         // GET /update -> streams the zip
         app.MapGet("/update", async (HttpContext context) =>

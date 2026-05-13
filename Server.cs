@@ -79,6 +79,10 @@ public class HttpServer
                 new MySqlServerVersion(new Version(8, 0, 36)));
         });
 
+        var cs = builder.Configuration.GetConnectionString("DefaultConnection");
+        Console.WriteLine("CONNECTION STRING:");
+        Console.WriteLine(cs);
+
         builder.WebHost.UseUrls("http://0.0.0.0:8080");
 
         // Project/app root (in dev = your .csproj folder)

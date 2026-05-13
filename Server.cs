@@ -70,8 +70,15 @@ public class HttpServer
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         builder.Services.AddDbContext<DataContext>(options =>
-            options.UseSqlite(
-                builder.Configuration.GetConnectionString("database.db")));
+        {
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+            options.UseMySql(
+                connectionString,
+                ServerVersion.AutoDetect(connectionString)
+            );
+        });
+
 
         // Project/app root (in dev = your .csproj folder)
         var root = builder.Environment.ContentRootPath;

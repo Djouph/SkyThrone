@@ -6,6 +6,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 
 public class HttpServer
 {
@@ -85,7 +86,7 @@ public class HttpServer
         var root = builder.Environment.ContentRootPath;
 
         // Everything local to the project
-        var imagesDir = Path.Combine(root, "Images");               // ./images
+        var imagesDir = Path.Combine(root, "Images");                // ./images
         var zipPath = Path.Combine(root, "downloads", "images.zip"); // ./downloads/images.zip
 
         var app = builder.Build();
@@ -158,7 +159,10 @@ public class HttpServer
         //When this is called upon, it will get a name and password. Then it will check there is a User with the same details.
         //If there is a User with said details then it will log them in.
         //If there isn't then it will ask for a new name and password and suggest to sign up
-        app.MapGet("/sign-in", async (string Username, string Password, DataContext context) =>
+        app.MapGet("/sign-in", async (
+            [FromQuery] string Username,
+            [FromQuery] string Password,
+            [FromServices] DataContext context) =>
         {
             var user = await context.Users
                 .FirstOrDefaultAsync(x =>
@@ -174,6 +178,13 @@ public class HttpServer
         });
 
         app.MapGet("/", () => "OK");
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var _ = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+            Console.WriteLine("DB resolved successfully");
+        }
 
         app.RunAsync(); // dont await so we can start the tcp server
     }

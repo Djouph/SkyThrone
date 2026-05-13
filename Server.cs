@@ -58,7 +58,7 @@ public class HttpServer
         return Path.GetFileName(imgUrl.Replace('\\', '/'));
     }
 
-    static public async Task RunHttpDownloadServerAsync(string[] args)
+    static public Task RunHttpDownloadServerAsync(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -186,7 +186,7 @@ public class HttpServer
             Console.WriteLine("DB resolved successfully");
         }
 
-        app.RunAsync(); // dont await so we can start the tcp server
+        return app.RunAsync(); // dont await so we can start the tcp server
     }
 }
 

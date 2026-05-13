@@ -79,6 +79,7 @@ public class HttpServer
             );
         });
 
+        builder.WebHost.UseUrls("http://0.0.0.0:8080");
 
         // Project/app root (in dev = your .csproj folder)
         var root = builder.Environment.ContentRootPath;

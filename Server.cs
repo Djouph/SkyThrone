@@ -239,8 +239,8 @@ class TcpServer
                 // Accept incoming connection
                 TcpClient client = server.AcceptTcpClient();
 
-                client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
-                SetKeepAlive(client, 5000, 2000);
+                // client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+                // SetKeepAlive(client, 5000, 2000);
 
                 Console.WriteLine("Client connected!");
 

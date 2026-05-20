@@ -9,7 +9,7 @@ class Api
 {
     // Gemini text endpoint (v1beta, 2.5-flash model)
     private const string Endpoint =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0:generateText";
 
     static public async Task<string> Play(Board game, string command)
     {

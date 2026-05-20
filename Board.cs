@@ -76,7 +76,6 @@ class Board
     // public PlayableUser current;
     // public PlayableUser other;
     const int StartingHand = 3;
-    public bool playerturn;
     public Board(PlayableUser p, PlayableUser e)
     {
         this.p = p;

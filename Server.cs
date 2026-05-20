@@ -207,6 +207,17 @@ public class HttpServer
 
 class TcpServer
 {
+    void SetKeepAlive(TcpClient client, uint time, uint interval)
+    {
+        var size = sizeof(uint);
+        var inOptionValues = new byte[size * 3];
+        BitConverter.GetBytes((uint)1).CopyTo(inOptionValues, 0); // enable
+        BitConverter.GetBytes(time).CopyTo(inOptionValues, size); // time before first probe (ms)
+        BitConverter.GetBytes(interval).CopyTo(inOptionValues, size * 2); // interval between probes (ms)
+        client.Client.IOControl(IOControlCode.KeepAliveValues, inOptionValues, null);
+    }
+
+
     public async Task Run()
     {
         TcpListener server = null;
@@ -227,6 +238,10 @@ class TcpServer
 
                 // Accept incoming connection
                 TcpClient client = server.AcceptTcpClient();
+
+                client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+                SetKeepAlive(client, 5000, 2000);
+
                 Console.WriteLine("Client connected!");
 
                 // Handle client communication in a new thread
@@ -244,10 +259,10 @@ class TcpServer
         }
     }
 
-    private static void HandleClient(TcpClient client)
+    private async void HandleClient(TcpClient client)
     {
         NetworkStream stream = client.GetStream();
-        byte[] buffer = new byte[2048];
+        byte[] buffer = new byte[4096];
         int bytesRead;
 
         JoinRequest? request = null;
@@ -257,108 +272,125 @@ class TcpServer
 
         // try
         // {
-        while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) != 0)
+
+        while (true)
         {
-            // Translate data bytes to a ASCII string
-            string data = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-
-            if (request == null)
+            try
             {
-                var options = new JsonSerializerOptions
+                bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+
+                // Translate data bytes to a ASCII string
+                string data = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+                if (request == null)
                 {
-                    IncludeFields = true,  // This includes all fields (public and private)
-                                           // DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never  // Never ignore anything
-                };
-                request = JsonSerializer.Deserialize<JoinRequest>(data, options);
-                // Console.WriteLine(JsonSerializer(request));
-                if (request == null) break; // TODO : SEND ERROR RESPONSE
-
-                // TODO : CHECK IF THE PLAYER CAN PLAY THE SELECTED LEVEL
-
-                const int playerId = 20000;
-                const int enemeyId = 600;
-
-                p = new Player(playerId, request.build);
-                Console.WriteLine(p.build[1]);
-                e = EnemyDataBase.EnemyFromEnemyId(enemeyId);
-                game = new Board(p, e);
-                game.GameStart();
-
-                // Echo back the data
-                OkJoin okJoin = new OkJoin()
-                {
-                    e = e,
-                    playerId = playerId, // temp const id for now (Change later)
-                };
-
-
-                string json = JsonSerializer.Serialize(okJoin, options);
-
-                byte[] response = Encoding.ASCII.GetBytes(json);
-                stream.Write(response, 0, response.Length);
-
-            }
-            else
-            {
-                // TODO : SIMULATE ENEMY PREPERATION (GEMINI API)
-                if (game != null)
-                {
-
                     var options = new JsonSerializerOptions
                     {
                         IncludeFields = true,  // This includes all fields (public and private)
                                                // DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never  // Never ignore anything
                     };
-                    var rFB = JsonSerializer.Deserialize<RFB>(data, options);
-                    Response[] objresponse = new Response[] { };
-                    String json;
-                    byte[] byteresponse;
+                    request = JsonSerializer.Deserialize<JoinRequest>(data, options);
+                    // Console.WriteLine(JsonSerializer(request));
+                    if (request == null) break; // TODO : SEND ERROR RESPONSE
 
-                    if (rFB.cardPlayed != -1)
+                    // TODO : CHECK IF THE PLAYER CAN PLAY THE SELECTED LEVEL
+
+                    const int playerId = 20000;
+                    const int enemeyId = 600;
+
+                    p = new Player(playerId, request.build);
+                    Console.WriteLine(p.build[1]);
+                    e = EnemyDataBase.EnemyFromEnemyId(enemeyId);
+                    game = new Board(p, e);
+                    game.GameStart();
+
+                    // Echo back the data
+                    OkJoin okJoin = new OkJoin()
                     {
+                        e = e,
+                        playerId = playerId, // temp const id for now (Change later)
+                    };
+
+
+                    string json = JsonSerializer.Serialize(okJoin, options);
+
+                    byte[] response = Encoding.ASCII.GetBytes(json);
+                    stream.Write(response, 0, response.Length);
+
+                }
+                else
+                {
+                    // TODO : SIMULATE ENEMY PREPERATION (GEMINI API)
+                    if (game != null)
+                    {
+
+                        var options = new JsonSerializerOptions
+                        {
+                            IncludeFields = true,  // This includes all fields (public and private)
+                                                   // DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never  // Never ignore anything
+                        };
+                        var rFB = JsonSerializer.Deserialize<RFB>(data, options);
+                        Response[] objresponse = new Response[] { };
+                        String json;
+                        byte[] byteresponse;
+
+                        if (rFB.cardPlayed != -1)
+                        {
+                            objresponse = p.PlayCard(rFB, game);
+                            json = JsonSerializer.Serialize(objresponse, options);
+                            byteresponse = Encoding.ASCII.GetBytes(json);
+                            stream.Write(byteresponse, 0, byteresponse.Length);
+                            continue;
+                        }
+
+                        game.PreparationPhase();
+
+                        game.BattlePhase(); // GET LIST OF ATTACKS (AND MAYBE ADDED CARDS) TO ANIAMTE AT THE USER SIDE.
+                        game.EndPhase();
+
+                        if (game.p.health < 1)
+                        {
+                            Console.WriteLine("DEFEAT");
+                            break;
+                        }
+                        if (game.e.health < 1)
+                        {
+                            Console.WriteLine("VICTORY");
+                            break;
+                        }
                         objresponse = p.PlayCard(rFB, game);
                         json = JsonSerializer.Serialize(objresponse, options);
                         byteresponse = Encoding.ASCII.GetBytes(json);
                         stream.Write(byteresponse, 0, byteresponse.Length);
-                        continue;
+
+
+                        // TODO : send the response form the PlayCard function so the frontend can get the imformation
                     }
-
-                    game.PreparationPhase();
-
-                    game.BattlePhase(); // GET LIST OF ATTACKS (AND MAYBE ADDED CARDS) TO ANIAMTE AT THE USER SIDE.
-                    game.EndPhase();
-
-                    if (game.p.health < 1)
-                    {
-                        Console.WriteLine("DEFEAT");
-                        break;
-                    }
-                    if (game.e.health < 1)
-                    {
-                        Console.WriteLine("VICTORY");
-                        break;
-                    }
-                    objresponse = p.PlayCard(rFB, game);
-                    json = JsonSerializer.Serialize(objresponse, options);
-                    byteresponse = Encoding.ASCII.GetBytes(json);
-                    stream.Write(byteresponse, 0, byteresponse.Length);
-
-
-                    // TODO : send the response form the PlayCard function so the frontend can get the imformation
                 }
             }
+            catch (SocketException ex) when (ex.SocketErrorCode == SocketError.ConnectionReset)
+            {
+                Console.WriteLine("Client disconnected abruptly (SocketException 104).");
+                break;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reading from client: {ex.Message}");
+                break;
+            }
+            // }
+            // catch (Exception ex)
+            // {
+            //     Console.WriteLine($"Error handling client: {ex.Message}");
+            // }
+            // finally
+            // {
+            //     client.Close();
+            //     Console.WriteLine("Client disconnected.");
+            // }
         }
-        // }
-        // catch (Exception ex)
-        // {
-        //     Console.WriteLine($"Error handling client: {ex.Message}");
-        // }
-        // finally
-        // {
-        //     client.Close();
-        //     Console.WriteLine("Client disconnected.");
-        // }
     }
+
 }
 
 

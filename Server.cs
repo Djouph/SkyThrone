@@ -207,16 +207,6 @@ public class HttpServer
 
 class TcpServer
 {
-    void SetKeepAlive(TcpClient client, uint time, uint interval)
-    {
-        var size = sizeof(uint);
-        var inOptionValues = new byte[size * 3];
-        BitConverter.GetBytes((uint)1).CopyTo(inOptionValues, 0); // enable
-        BitConverter.GetBytes(time).CopyTo(inOptionValues, size); // time before first probe (ms)
-        BitConverter.GetBytes(interval).CopyTo(inOptionValues, size * 2); // interval between probes (ms)
-        client.Client.IOControl(IOControlCode.KeepAliveValues, inOptionValues, null);
-    }
-
 
     public async Task Run()
     {
@@ -238,9 +228,6 @@ class TcpServer
 
                 // Accept incoming connection
                 TcpClient client = server.AcceptTcpClient();
-
-                // client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
-                // SetKeepAlive(client, 5000, 2000);
 
                 Console.WriteLine("Client connected!");
 

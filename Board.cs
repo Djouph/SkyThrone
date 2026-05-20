@@ -73,8 +73,6 @@ class Board
 {
     public PlayableUser p;
     public PlayableUser e;
-    // public PlayableUser current;
-    // public PlayableUser other;
     const int StartingHand = 3;
     public Board(PlayableUser p, PlayableUser e)
     {

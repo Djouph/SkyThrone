@@ -13,7 +13,7 @@ class Api
 
     static public async Task<string> Play(Board game, string command)
     {
-        var apiKey = Environment.GetEnvironmentVariable("GOOGLE_API_KEY");
+        var apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
         ;
 
         // 2. Create HTTP client and request body

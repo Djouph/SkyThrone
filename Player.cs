@@ -82,6 +82,7 @@ class Enemy : PlayableUser
                 }
             }
         }
+
     }
 
     public Enemy Clone()
@@ -226,6 +227,21 @@ class Player : PlayableUser
         {
             name = "playerhealth",
             payload = health,
+        });
+        response.Add(new Response()
+        {
+            name = "Apihealth",
+            payload = b.e.health,
+        });
+        response.Add(new Response()
+        {
+            name = "Apihand",
+            payload = b.e.hand.Count,
+        });
+        response.Add(new Response()
+        {
+            name = "Apiboard",
+            payload = b.e.board,
         });
 
         var options = new JsonSerializerOptions

@@ -191,7 +191,7 @@ public class HttpServer
             return Results.Ok(user);
         });
 
-        app.MapGet("/Deck-update", async (
+        app.MapGet("/deck-update", async (
             [FromQuery] string Username,
             [FromQuery] string Password,
             [FromQuery] string Deck,

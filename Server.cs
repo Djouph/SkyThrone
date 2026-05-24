@@ -161,7 +161,7 @@ public class HttpServer
             {
                 Username = Username,
                 Password = Password,
-                Deck = []
+                Deck = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9]
             };
 
             context.Users.Add(user);
@@ -188,6 +188,29 @@ public class HttpServer
             {
                 return Results.BadRequest("Invalid username or password");
             }
+            return Results.Ok(user);
+        });
+
+        app.MapGet("/Deck-update", async (
+            [FromQuery] string Username,
+            [FromQuery] string Password,
+            [FromQuery] string Deck,
+            [FromServices] DataContext context) =>
+        {
+            var user = await context.Users
+                .FirstOrDefaultAsync(x =>
+                    x.Username == Username &&
+                    x.Password == Password);
+
+            if (user == null)
+            {
+                return Results.BadRequest("Error: username or password has been tampered with");
+            }
+
+            List<int> deck = JsonSerializer.Deserialize<List<int>>(Deck)!;
+            user.Deck=deck;
+            context.Update(user);
+            context.SaveChanges();
 
             return Results.Ok(user);
         });

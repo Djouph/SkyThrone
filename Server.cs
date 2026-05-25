@@ -208,7 +208,7 @@ public class HttpServer
             }
 
             List<int> deck = JsonSerializer.Deserialize<List<int>>(Deck)!;
-            user.Deck=deck;
+            user.Deck = deck;
             context.Update(user);
             context.SaveChanges();
 
@@ -353,7 +353,7 @@ class TcpServer
                             continue;
                         }
 
-                        game.PreparationPhase();
+                        await game.PreparationPhase();
 
                         game.BattlePhase(); // GET LIST OF ATTACKS (AND MAYBE ADDED CARDS) TO ANIAMTE AT THE USER SIDE.
                         game.EndPhase();

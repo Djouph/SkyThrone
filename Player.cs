@@ -241,7 +241,7 @@ class Player : PlayableUser
         response.Add(new Response()
         {
             name = "Apiboard",
-            payload = b.e.board,
+            payload = b.e.board.Select((c) => c.id).ToList(),
         });
 
         var options = new JsonSerializerOptions

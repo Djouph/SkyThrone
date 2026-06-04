@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 
 class DataBase
 {
-    public const string VERSION = "1.0.0";
+    public const string VERSION = "1.0.1";
 
     public static Dictionary<int, Card> lookup = new Dictionary<int, Card>();
 
@@ -104,6 +104,7 @@ class DataBase
        description: "ssssss im a sssssnake",
        attack: 4,
        Health: 3,
+       imgUrl: "snake.png",
        id: 4,
        faction: Faction.Small
        );
@@ -116,6 +117,7 @@ class DataBase
        description: "Adrenaline: give another ally +1/+1",
        attack: 1,
        Health: 6,
+       imgUrl: "elephant.png",
        id: 5,
        faction: Faction.Small,
        adrenaline: (sender, b, Card) =>
@@ -138,6 +140,7 @@ class DataBase
        description: "Adrenaline: +1 health",
        attack: 2,
        Health: 2,
+       imgUrl: "turtle.png",
        id: 6,
        faction: Faction.Small,
        adrenaline: (sender, b, Card) =>
@@ -154,6 +157,7 @@ class DataBase
        description: "OnDeploy: gain 1 attack for each other card you have on the board",
        attack: 5,
        Health: 5,
+       imgUrl: "lion.png",
        id: 7,
        faction: Faction.Small,
        onDeploy: (sender, b, Card) =>
@@ -174,6 +178,7 @@ class DataBase
         description: "OnDeploy: give +1 max energy",
         attack: 1,
         Health: 1,
+        imgUrl: "monkey.png",
         id: 8,
         faction: Faction.Small,
         onDeploy: (sender, b, Card) =>

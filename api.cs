@@ -13,7 +13,7 @@ class Api
     private const string Model = "models/gemini-2.5-flash";
 
     private const string GenerateEndpoint =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
 
     private const string CacheEndpoint =
         "https://generativelanguage.googleapis.com/v1beta/cachedContents";

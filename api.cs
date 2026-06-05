@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
@@ -10,192 +12,217 @@ using System.Threading.Tasks;
 
 class Api
 {
-    private const string ModelName = "gemini-3.5-flash";
-
     private const string BaseUrl = "https://generativelanguage.googleapis.com/v1beta";
 
-    private static readonly string GenerateEndpoint =
-        $"{BaseUrl}/models/{ModelName}:generateContent";
+    // Swap order if you want 2.5 first.
+    // Gemini 3.5 Flash model id is gemini-3.5-flash.
+    // Gemini 2.5 Flash model id is gemini-2.5-flash.
+    private static readonly string[] Models =
+    {
+        "gemini-3.5-flash",
+        "gemini-2.5-flash"
+    };
 
-    private const string CacheEndpoint =
-        $"{BaseUrl}/cachedContents";
+    private const string CacheStateFile = "gemini_cache_state.json";
+    private const int CacheTtlSeconds = 60 * 60; // 1 hour
 
-    private static readonly HttpClient Client = new HttpClient();
+    private static readonly HttpClient Client = new HttpClient
+    {
+        Timeout = TimeSpan.FromSeconds(90)
+    };
+
     private static readonly SemaphoreSlim CacheLock = new SemaphoreSlim(1, 1);
 
-    private static string? cachedContentName;
-    private static string? cachedFilesHash;
-    private static DateTimeOffset cacheExpiresAt = DateTimeOffset.MinValue;
+    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true
+    };
 
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
-    private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(8);
+    private class CacheEntry
+    {
+        public string Name { get; set; } = "";
+        public string Hash { get; set; } = "";
+        public DateTimeOffset ExpiresAtUtc { get; set; }
+    }
+
+    private class ApiCallResult
+    {
+        public bool Success { get; set; }
+        public HttpStatusCode? StatusCode { get; set; }
+        public string Text { get; set; } = "";
+        public string ErrorBody { get; set; } = "";
+    }
 
     public static async Task<string> Play(Board game, string command)
     {
-        string apiKey = GetApiKey();
-        string cacheName = await GetOrCreateCache(apiKey);
+        string? apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
 
-        string handStr = JsonSerializer.Serialize(
-            game.e.hand.Select((x, index) => new
-            {
-                selected_index = index,
-                name = x.name,
-                id = x.id,
-                cost = x is Unit u ? u.cost : 0
-            })
-        );
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new InvalidOperationException("Missing GEMINI_API_KEY environment variable.");
 
-        string deckStr = JsonSerializer.Serialize(
-            game.e.deck.Select(x => new
-            {
-                name = x.name,
-                id = x.id
-            })
-        );
+        string rules = await File.ReadAllTextAsync("rulebook.json");
+        string cards = await File.ReadAllTextAsync("cards.json");
 
-        string prompt = $@"
-Current hand JSON:
-{handStr}
+        string staticHash = Sha256(rules + "\n---CARDS---\n" + cards);
 
-Current deck JSON:
-{deckStr}
+        string handstr = "[" + string.Join(", ",
+            game.e.hand.Select((x, i) =>
+                $"(selected_index: {i}, name: {x.name}, id: {x.id}, cost: {((Unit)x).cost})"
+            )) + "]";
 
-Current energy:
-{game.e.energy}
+        string deckstr = "[" + string.Join(", ",
+            game.e.deck.Select(x => x.name)
+        ) + "]";
+
+        string dynamicPrompt = $@"
+Your hand cards: {handstr}
+Your deck cards: {deckstr}
+
+You have ONLY {game.e.energy} ENERGY.
 
 Objective:
 {command}
 
-Choose cards to play.
+Return ONLY valid JSON.
 
-Rules:
-- Only choose cards from the current hand.
-- selected_index must match the hand index.
-- selected_id must match the card id.
-- mana_cost should match the card cost.
-- Energy is only information, not a hard limit.
-- You may choose a card even if its mana_cost is higher than current energy.
-- Return only a JSON array.
-- If you choose no cards, return [].
-- Do not use markdown.
-- Do not explain.
-
-Required format:
+Return an array of objects:
 [
   {{
-    ""selected_index"": 0,
-    ""selected_id"": 123,
-    ""mana_cost"": 2
+    ""selected_index"": int,
+    ""selected_id"": int,
+    ""mana_cost"": int
   }}
 ]
+
+Rules:
+- selected_index is the card position in hand.
+- selected_id must match the card id.
+- mana_cost must match the card cost.
+- You may play multiple cards.
+- After every chosen card, subtract its mana_cost from the remaining energy.
+- Do not choose a card if its cost is higher than the remaining energy.
+- If no valid card should be played, return [].
 ";
 
-        object requestBody = new
+        Console.WriteLine("Prompt dynamic part:");
+        Console.WriteLine(dynamicPrompt);
+
+        while (true)
         {
-            cachedContent = cacheName,
-            contents = new[]
+            bool sawRetryableFailure = false;
+            int permanentFailures = 0;
+
+            foreach (string model in Models)
             {
-                new
+                try
                 {
-                    role = "user",
-                    parts = new[]
+                    Console.WriteLine($"Trying model: {model}");
+
+                    string cachedContentName = await GetOrCreateCacheAsync(
+                        apiKey,
+                        model,
+                        rules,
+                        cards,
+                        staticHash
+                    );
+
+                    ApiCallResult result = await GenerateAsync(
+                        apiKey,
+                        model,
+                        cachedContentName,
+                        dynamicPrompt
+                    );
+
+                    if (result.Success)
                     {
-                        new { text = prompt }
+                        Console.WriteLine($"Success using model: {model}");
+                        Console.WriteLine("Model response:");
+                        Console.WriteLine(result.Text);
+                        return CleanJson(result.Text);
                     }
+
+                    Console.WriteLine($"Model failed: {model}");
+                    Console.WriteLine($"{(int?)result.StatusCode} {result.StatusCode}");
+                    Console.WriteLine(result.ErrorBody);
+
+                    if (IsAuthFailure(result.StatusCode))
+                        return "ERROR";
+
+                    if (IsRetryable(result.StatusCode))
+                        sawRetryableFailure = true;
+                    else
+                        permanentFailures++;
                 }
-            },
-            generationConfig = new
-            {
-                temperature = 0.0,
-                maxOutputTokens = 1024,
-                responseMimeType = "application/json"
+                catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException)
+                {
+                    Console.WriteLine($"Network/timeout error with {model}: {ex.Message}");
+                    sawRetryableFailure = true;
+                }
+                catch (ApiException ex)
+                {
+                    Console.WriteLine($"API error with {model}: {(int)ex.StatusCode} {ex.StatusCode}");
+                    Console.WriteLine(ex.Body);
+
+                    if (IsAuthFailure(ex.StatusCode))
+                        return "ERROR";
+
+                    if (IsRetryable(ex.StatusCode))
+                        sawRetryableFailure = true;
+                    else
+                        permanentFailures++;
+                }
             }
-        };
 
-        // Retries only on Gemini temporary/server errors.
-        string responseJson = await PostJsonUntilSuccess(apiKey, GenerateEndpoint, requestBody);
+            if (!sawRetryableFailure && permanentFailures >= Models.Length)
+            {
+                Console.WriteLine("All models failed with permanent errors.");
+                return "ERROR";
+            }
 
-        using JsonDocument doc = JsonDocument.Parse(responseJson);
-        JsonElement root = doc.RootElement;
-
-        PrintUsage(root);
-
-        string text = ExtractGeminiText(root)
-            .Replace("```json", "")
-            .Replace("```", "")
-            .Trim();
-
-        Console.WriteLine("Raw Gemini JSON:");
-        Console.WriteLine(text);
-
-        // No gameplay validation here.
-        // If Gemini chooses a too-expensive card, we return it anyway.
-        return text;
+            Console.WriteLine("All models unavailable/busy. Retrying in 3 seconds...");
+            await Task.Delay(TimeSpan.FromSeconds(3));
+        }
     }
 
-    private static async Task<string> GetOrCreateCache(string apiKey)
+    private static async Task<string> GetOrCreateCacheAsync(
+        string apiKey,
+        string model,
+        string rules,
+        string cards,
+        string staticHash)
     {
-        string rules = File.ReadAllText("rulebook.json");
-        string cards = File.ReadAllText("cards.json");
-
-        string currentHash = HashText(rules + "\n---CARDS---\n" + cards);
-        DateTimeOffset now = DateTimeOffset.UtcNow;
-
-        if (cachedContentName != null &&
-            cachedFilesHash == currentHash &&
-            now < cacheExpiresAt)
-        {
-            return cachedContentName;
-        }
-
         await CacheLock.WaitAsync();
 
         try
         {
-            now = DateTimeOffset.UtcNow;
+            Dictionary<string, CacheEntry> cacheState = LoadCacheState();
 
-            if (cachedContentName != null &&
-                cachedFilesHash == currentHash &&
-                now < cacheExpiresAt)
+            if (cacheState.TryGetValue(model, out CacheEntry? entry) &&
+                entry.Hash == staticHash &&
+                entry.ExpiresAtUtc > DateTimeOffset.UtcNow.AddMinutes(5))
             {
-                return cachedContentName;
+                Console.WriteLine($"Using existing cache for {model}: {entry.Name}");
+                return entry.Name;
             }
 
-            string cachedText = $@"
-SKYTHRONE RULEBOOK JSON:
+            Console.WriteLine($"Creating new cache for {model}...");
+
+            string staticContext = $@"
+Rules JSON:
 {rules}
 
-SKYTHRONE CARDS JSON:
+Cards JSON:
 {cards}
+
+Use these rules and card definitions for every future game decision.
 ";
 
-            object cacheBody = new
+            var requestBody = new
             {
-                model = $"models/{ModelName}",
-                displayName = "skythrone-rules-cards",
-                ttl = $"{(int)CacheTtl.TotalSeconds}s",
-
-                systemInstruction = new
-                {
-                    parts = new[]
-                    {
-                        new
-                        {
-                            text = @"
-You are a SKYTHRONE card-game AI.
-Use the cached rulebook and cards as the source of truth.
-
-When choosing cards:
-- only choose cards from the current hand
-- never invent cards
-- energy is only information, not a hard limit
-- you may choose cards even if their cost is higher than current energy
-- return only valid JSON
-"
-                        }
-                    }
-                },
-
+                model = $"models/{model}",
+                displayName = $"game-rules-cards-{model}",
+                ttl = $"{CacheTtlSeconds}s",
                 contents = new[]
                 {
                     new
@@ -203,31 +230,50 @@ When choosing cards:
                         role = "user",
                         parts = new[]
                         {
-                            new { text = cachedText }
+                            new { text = staticContext }
                         }
                     }
                 }
             };
 
-            string responseJson = await PostJsonUntilSuccess(apiKey, CacheEndpoint, cacheBody);
+            using HttpResponseMessage response = await PostJsonAsync(
+                $"{BaseUrl}/cachedContents",
+                apiKey,
+                requestBody
+            );
 
-            using JsonDocument doc = JsonDocument.Parse(responseJson);
+            string body = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+                throw new ApiException(response.StatusCode, body);
+
+            using JsonDocument doc = JsonDocument.Parse(body);
             JsonElement root = doc.RootElement;
 
-            string? name = root.GetProperty("name").GetString();
+            string cacheName = root.GetProperty("name").GetString()
+                ?? throw new Exception("Cache creation succeeded but no cache name was returned.");
 
-            if (string.IsNullOrWhiteSpace(name))
-                throw new Exception("Cache created, but Gemini did not return a cache name.");
+            DateTimeOffset expiresAt = DateTimeOffset.UtcNow.AddSeconds(CacheTtlSeconds);
 
-            cachedContentName = name;
-            cachedFilesHash = currentHash;
+            if (root.TryGetProperty("expireTime", out JsonElement expireTimeElement))
+            {
+                string? expireTime = expireTimeElement.GetString();
 
-            // Refresh before real expiry to avoid using an expired cache.
-            cacheExpiresAt = DateTimeOffset.UtcNow.Add(CacheTtl).AddMinutes(-5);
+                if (DateTimeOffset.TryParse(expireTime, out DateTimeOffset parsed))
+                    expiresAt = parsed;
+            }
 
-            Console.WriteLine($"Created Gemini cache: {cachedContentName}");
+            cacheState[model] = new CacheEntry
+            {
+                Name = cacheName,
+                Hash = staticHash,
+                ExpiresAtUtc = expiresAt
+            };
 
-            return cachedContentName;
+            SaveCacheState(cacheState);
+
+            Console.WriteLine($"Created cache for {model}: {cacheName}");
+            return cacheName;
         }
         finally
         {
@@ -235,113 +281,179 @@ When choosing cards:
         }
     }
 
-    private static async Task<string> PostJsonUntilSuccess(
+    private static async Task<ApiCallResult> GenerateAsync(
         string apiKey,
-        string endpoint,
-        object body,
-        CancellationToken cancellationToken = default)
+        string model,
+        string cachedContentName,
+        string dynamicPrompt)
     {
-        int attempt = 1;
-
-        while (true)
+        var requestBody = new
         {
-            try
+            cachedContent = cachedContentName,
+            contents = new[]
             {
-                return await PostJsonOnce(apiKey, endpoint, body, cancellationToken);
-            }
-            catch (GeminiRetryableException ex)
+                new
+                {
+                    role = "user",
+                    parts = new[]
+                    {
+                        new { text = dynamicPrompt }
+                    }
+                }
+            },
+            generationConfig = new
             {
-                Console.WriteLine($"Gemini temporary error on attempt {attempt}:");
-                Console.WriteLine(ex.Message);
-                Console.WriteLine($"Retrying in {RetryDelay.TotalSeconds} seconds...");
-
-                attempt++;
-                await Task.Delay(RetryDelay, cancellationToken);
+                responseMimeType = "application/json"
             }
-        }
-    }
+        };
 
-    private static async Task<string> PostJsonOnce(
-        string apiKey,
-        string endpoint,
-        object body,
-        CancellationToken cancellationToken = default)
-    {
-        string url = $"{endpoint}?key={apiKey}";
-        string json = JsonSerializer.Serialize(body);
-
-        using var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        using HttpResponseMessage response =
-            await Client.PostAsync(url, content, cancellationToken);
-
-        string responseText = await response.Content.ReadAsStringAsync(cancellationToken);
-
-        if (response.IsSuccessStatusCode)
-            return responseText;
-
-        int status = (int)response.StatusCode;
-
-        bool retryable =
-            status == 429 ||
-            status == 500 ||
-            status == 502 ||
-            status == 503 ||
-            status == 504 ||
-            responseText.Contains("high demand", StringComparison.OrdinalIgnoreCase) ||
-            responseText.Contains("unavailable", StringComparison.OrdinalIgnoreCase) ||
-            responseText.Contains("overloaded", StringComparison.OrdinalIgnoreCase);
-
-        if (retryable)
-        {
-            throw new GeminiRetryableException(
-                $"HTTP {status} {response.ReasonPhrase}\n{responseText}"
-            );
-        }
-
-        throw new Exception(
-            $"Gemini non-retryable error: HTTP {status} {response.ReasonPhrase}\n{responseText}"
+        using HttpResponseMessage response = await PostJsonAsync(
+            $"{BaseUrl}/models/{model}:generateContent",
+            apiKey,
+            requestBody
         );
-    }
 
-    private static string ExtractGeminiText(JsonElement root)
-    {
-        return root
-            .GetProperty("candidates")[0]
-            .GetProperty("content")
-            .GetProperty("parts")[0]
-            .GetProperty("text")
-            .GetString() ?? "";
-    }
+        string body = await response.Content.ReadAsStringAsync();
 
-    private static void PrintUsage(JsonElement root)
-    {
-        if (root.TryGetProperty("usageMetadata", out JsonElement usage))
+        if (!response.IsSuccessStatusCode)
         {
-            Console.WriteLine("Usage metadata:");
-            Console.WriteLine(usage.ToString());
+            return new ApiCallResult
+            {
+                Success = false,
+                StatusCode = response.StatusCode,
+                ErrorBody = body
+            };
+        }
+
+        string? text = ExtractModelText(body);
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return new ApiCallResult
+            {
+                Success = false,
+                StatusCode = response.StatusCode,
+                ErrorBody = body
+            };
+        }
+
+        return new ApiCallResult
+        {
+            Success = true,
+            StatusCode = response.StatusCode,
+            Text = text
+        };
+    }
+
+    private static async Task<HttpResponseMessage> PostJsonAsync(
+        string url,
+        string apiKey,
+        object requestBody)
+    {
+        string json = JsonSerializer.Serialize(requestBody);
+
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url);
+        request.Headers.Add("x-goog-api-key", apiKey);
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        return await Client.SendAsync(request);
+    }
+
+    private static string? ExtractModelText(string responseJson)
+    {
+        using JsonDocument doc = JsonDocument.Parse(responseJson);
+        JsonElement root = doc.RootElement;
+
+        if (!root.TryGetProperty("candidates", out JsonElement candidates))
+            return null;
+
+        if (candidates.GetArrayLength() == 0)
+            return null;
+
+        JsonElement firstCandidate = candidates[0];
+
+        if (!firstCandidate.TryGetProperty("content", out JsonElement content))
+            return null;
+
+        if (!content.TryGetProperty("parts", out JsonElement parts))
+            return null;
+
+        if (parts.GetArrayLength() == 0)
+            return null;
+
+        if (!parts[0].TryGetProperty("text", out JsonElement text))
+            return null;
+
+        return text.GetString();
+    }
+
+    private static string CleanJson(string text)
+    {
+        return text
+            .Replace("```json", "")
+            .Replace("```", "")
+            .Trim();
+    }
+
+    private static bool IsRetryable(HttpStatusCode? statusCode)
+    {
+        if (statusCode == null)
+            return true;
+
+        return statusCode == HttpStatusCode.RequestTimeout ||        // 408
+               statusCode == (HttpStatusCode)429 ||                 // Too Many Requests
+               statusCode == HttpStatusCode.InternalServerError ||   // 500
+               statusCode == HttpStatusCode.BadGateway ||            // 502
+               statusCode == HttpStatusCode.ServiceUnavailable ||    // 503
+               statusCode == HttpStatusCode.GatewayTimeout;          // 504
+    }
+
+    private static bool IsAuthFailure(HttpStatusCode? statusCode)
+    {
+        return statusCode == HttpStatusCode.Unauthorized ||
+               statusCode == HttpStatusCode.Forbidden;
+    }
+
+    private static Dictionary<string, CacheEntry> LoadCacheState()
+    {
+        if (!File.Exists(CacheStateFile))
+            return new Dictionary<string, CacheEntry>();
+
+        try
+        {
+            string json = File.ReadAllText(CacheStateFile);
+
+            return JsonSerializer.Deserialize<Dictionary<string, CacheEntry>>(json, JsonOptions)
+                   ?? new Dictionary<string, CacheEntry>();
+        }
+        catch
+        {
+            return new Dictionary<string, CacheEntry>();
         }
     }
 
-    private static string GetApiKey()
+    private static void SaveCacheState(Dictionary<string, CacheEntry> cacheState)
     {
-        string? apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
-
-        if (string.IsNullOrWhiteSpace(apiKey))
-            throw new Exception("Missing GEMINI_API_KEY environment variable.");
-
-        return apiKey;
+        string json = JsonSerializer.Serialize(cacheState, JsonOptions);
+        File.WriteAllText(CacheStateFile, json);
     }
 
-    private static string HashText(string text)
+    private static string Sha256(string input)
     {
-        byte[] bytes = Encoding.UTF8.GetBytes(text);
-        byte[] hash = SHA256.HashData(bytes);
-        return Convert.ToHexString(hash);
+        byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+        return Convert.ToHexString(bytes);
     }
 
-    private class GeminiRetryableException : Exception
+    private class ApiException : Exception
     {
-        public GeminiRetryableException(string message) : base(message) { }
+        public HttpStatusCode StatusCode { get; }
+        public string Body { get; }
+
+        public ApiException(HttpStatusCode statusCode, string body)
+            : base($"{(int)statusCode} {statusCode}")
+        {
+            StatusCode = statusCode;
+            Body = body;
+        }
     }
 }

@@ -36,35 +36,31 @@ class Api
     public static async Task<string> Play(Board game, string command)
     {
         string apiKey = GetApiKey();
-
-        // Creates/reuses cache for rulebook.json + cards.json
         string cacheName = await GetOrCreateCache(apiKey);
 
-        string handStr = "[" + string.Join(", ",
-            game.e.hand.Select((x, index) =>
+        string handStr = JsonSerializer.Serialize(
+            game.e.hand.Select((x, index) => new
             {
-                int cost = x is Unit u ? u.cost : 0;
+                selected_index = index,
+                name = x.name,
+                id = x.id,
+                cost = x is Unit u ? u.cost : 0
+            })
+        );
 
-                return $@"{{
-                    ""selected_index"": {index},
-                    ""name"": ""{Escape(x.name)}"",
-                    ""id"": {x.id},
-                    ""cost"": {cost}
-                }}";
-            })) + "]";
-
-        string deckStr = "[" + string.Join(", ",
-            game.e.deck.Select(x =>
-                $@"{{ ""name"": ""{Escape(x.name)}"", ""id"": {x.id} }}"
-            )) + "]";
+        string deckStr = JsonSerializer.Serialize(
+            game.e.deck.Select(x => new
+            {
+                name = x.name,
+                id = x.id
+            })
+        );
 
         string prompt = $@"
-Current SKYTHRONE game state:
-
-Hand:
+Current hand JSON:
 {handStr}
 
-Deck:
+Current deck JSON:
 {deckStr}
 
 Current energy:
@@ -73,21 +69,18 @@ Current energy:
 Objective:
 {command}
 
-Choose which cards to play.
+Choose cards to play.
 
 Rules:
-- You may only choose cards from the hand above.
-- selected_index must match the card position in the hand.
-- selected_id must match that card's id.
-- mana_cost must match that card's cost.
-- Total mana_cost of all selected cards must be <= current energy.
-- After playing a card, subtract its mana_cost from remaining energy.
-- Stop when there is no valid useful card to play.
-- Return ONLY valid JSON.
-- No markdown.
-- No explanation.
+- Only choose cards from the current hand.
+- selected_index must match the hand index.
+- selected_id must match the card id.
+- mana_cost must match the card cost.
+- Sum of mana_cost must be <= {game.e.energy}.
+- Return only a JSON array.
+- If no valid play exists, return [].
 
-Required response format:
+Required format:
 [
   {{
     ""selected_index"": 0,
@@ -97,37 +90,66 @@ Required response format:
 ]
 ";
 
-        object requestBody = CreateGenerateBody(cacheName, prompt);
+        for (int attempt = 0; attempt < 2; attempt++)
+        {
+            object requestBody = new
+            {
+                cachedContent = cacheName,
+                contents = new[]
+                {
+                new
+                {
+                    role = "user",
+                    parts = new[]
+                    {
+                        new { text = prompt }
+                    }
+                }
+            },
+                generationConfig = new
+                {
+                    temperature = 0.0,
+                    maxOutputTokens = 1024,
+                    responseMimeType = "application/json"
+                }
+            };
 
-        string responseJson;
+            string responseJson = await PostJson(apiKey, GenerateEndpoint, requestBody);
 
+            using JsonDocument doc = JsonDocument.Parse(responseJson);
+            JsonElement root = doc.RootElement;
+
+            PrintUsage(root);
+
+            string text = ExtractGeminiText(root)
+                .Replace("```json", "")
+                .Replace("```", "")
+                .Trim();
+
+            Console.WriteLine("Raw Gemini JSON:");
+            Console.WriteLine(text);
+
+            if (IsValidJsonArray(text))
+                return text;
+
+            Console.WriteLine("Gemini returned invalid JSON. Retrying...");
+        }
+
+        return "[]";
+    }
+
+    private static bool IsValidJsonArray(string json)
+    {
         try
         {
-            responseJson = await PostJson(apiKey, GenerateEndpoint, requestBody);
+            using JsonDocument doc = JsonDocument.Parse(json);
+            return doc.RootElement.ValueKind == JsonValueKind.Array;
         }
         catch
         {
-            // Cache might have expired server-side.
-            cachedContentName = null;
-            cacheName = await GetOrCreateCache(apiKey);
-
-            requestBody = CreateGenerateBody(cacheName, prompt);
-            responseJson = await PostJson(apiKey, GenerateEndpoint, requestBody);
+            return false;
         }
-
-        using JsonDocument doc = JsonDocument.Parse(responseJson);
-        JsonElement root = doc.RootElement;
-
-        PrintUsage(root);
-
-        string text = ExtractGeminiText(root);
-
-        return text
-            .Replace("```json", "")
-            .Replace("```", "")
-            .Trim();
     }
-
     private static object CreateGenerateBody(string cacheName, string prompt)
     {
         return new

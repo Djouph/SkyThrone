@@ -114,7 +114,7 @@ Required format:
                 }
             };
 
-            string responseJson = await PostJson(apiKey, GenerateEndpoint, requestBody);
+            string responseJson = await PostJsonUntilSuccess(apiKey, GenerateEndpoint, requestBody);
 
             using JsonDocument doc = JsonDocument.Parse(responseJson);
             JsonElement root = doc.RootElement;
@@ -252,7 +252,7 @@ When choosing cards:
                 }
             };
 
-            string responseJson = await PostJson(apiKey, CacheEndpoint, cacheBody);
+            string responseJson = await PostJsonUntilSuccess(apiKey, CacheEndpoint, cacheBody);
 
             using JsonDocument doc = JsonDocument.Parse(responseJson);
             JsonElement root = doc.RootElement;
@@ -278,26 +278,79 @@ When choosing cards:
         }
     }
 
-    private static async Task<string> PostJson(string apiKey, string endpoint, object body)
+    private static async Task<string> PostJsonUntilSuccess(
+        string apiKey,
+        string endpoint,
+        object body,
+        CancellationToken cancellationToken = default)
+    {
+        int attempt = 1;
+
+        while (true)
+        {
+            try
+            {
+                return await PostJsonOnce(apiKey, endpoint, body, cancellationToken);
+            }
+            catch (GeminiRetryableException ex)
+            {
+                Console.WriteLine($"Gemini temporary error on attempt {attempt}:");
+                Console.WriteLine(ex.Message);
+                Console.WriteLine("Retrying in 3 seconds...");
+
+                attempt++;
+                await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+            }
+        }
+    }
+
+    private static async Task<string> PostJsonOnce(
+        string apiKey,
+        string endpoint,
+        object body,
+        CancellationToken cancellationToken = default)
     {
         string url = $"{endpoint}?key={apiKey}";
         string json = JsonSerializer.Serialize(body);
 
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
-        using HttpResponseMessage response = await Client.PostAsync(url, content);
 
-        string responseText = await response.Content.ReadAsStringAsync();
+        using HttpResponseMessage response =
+            await Client.PostAsync(url, content, cancellationToken);
 
-        if (!response.IsSuccessStatusCode)
+        string responseText = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (response.IsSuccessStatusCode)
+            return responseText;
+
+        int status = (int)response.StatusCode;
+
+        bool retryable =
+            status == 429 ||
+            status == 500 ||
+            status == 502 ||
+            status == 503 ||
+            status == 504 ||
+            responseText.Contains("high demand", StringComparison.OrdinalIgnoreCase) ||
+            responseText.Contains("unavailable", StringComparison.OrdinalIgnoreCase) ||
+            responseText.Contains("overloaded", StringComparison.OrdinalIgnoreCase);
+
+        if (retryable)
         {
-            Console.WriteLine("Gemini request failed:");
-            Console.WriteLine($"{(int)response.StatusCode} {response.ReasonPhrase}");
-            Console.WriteLine(responseText);
-
-            throw new Exception(responseText);
+            throw new GeminiRetryableException(
+                $"HTTP {status} {response.ReasonPhrase}\n{responseText}"
+            );
         }
 
-        return responseText;
+        // Do NOT retry bad requests / invalid API key / broken JSON forever.
+        throw new Exception(
+            $"Gemini non-retryable error: HTTP {status} {response.ReasonPhrase}\n{responseText}"
+        );
+    }
+
+    private class GeminiRetryableException : Exception
+    {
+        public GeminiRetryableException(string message) : base(message) { }
     }
 
     private static string ExtractGeminiText(JsonElement root)

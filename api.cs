@@ -28,7 +28,7 @@ class Api
     private static DateTimeOffset cacheExpiresAt = DateTimeOffset.MinValue;
 
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
-    private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(8);
 
     public static async Task<string> Play(Board game, string command)
     {

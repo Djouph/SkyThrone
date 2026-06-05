@@ -10,14 +10,10 @@ using System.Threading.Tasks;
 
 class Api
 {
-    // Latest stable general text model right now
     private const string ModelName = "gemini-3.5-flash";
 
-    // If you truly want Google's auto-updating alias instead, use:
-    // private const string ModelName = "gemini-flash-latest";
-    // But for a game, stable is safer.
-
     private const string BaseUrl = "https://generativelanguage.googleapis.com/v1beta";
+
     private static readonly string GenerateEndpoint =
         $"{BaseUrl}/models/{ModelName}:generateContent";
 
@@ -32,6 +28,7 @@ class Api
     private static DateTimeOffset cacheExpiresAt = DateTimeOffset.MinValue;
 
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
+    private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(3);
 
     public static async Task<string> Play(Board game, string command)
     {
@@ -75,10 +72,13 @@ Rules:
 - Only choose cards from the current hand.
 - selected_index must match the hand index.
 - selected_id must match the card id.
-- mana_cost must match the card cost.
-- Sum of mana_cost must be <= {game.e.energy}.
+- mana_cost should match the card cost.
+- Energy is only information, not a hard limit.
+- You may choose a card even if its mana_cost is higher than current energy.
 - Return only a JSON array.
-- If no valid play exists, return [].
+- If you choose no cards, return [].
+- Do not use markdown.
+- Do not explain.
 
 Required format:
 [
@@ -90,69 +90,7 @@ Required format:
 ]
 ";
 
-        for (int attempt = 0; attempt < 2; attempt++)
-        {
-            object requestBody = new
-            {
-                cachedContent = cacheName,
-                contents = new[]
-                {
-                new
-                {
-                    role = "user",
-                    parts = new[]
-                    {
-                        new { text = prompt }
-                    }
-                }
-            },
-                generationConfig = new
-                {
-                    temperature = 0.0,
-                    maxOutputTokens = 1024,
-                    responseMimeType = "application/json"
-                }
-            };
-
-            string responseJson = await PostJsonUntilSuccess(apiKey, GenerateEndpoint, requestBody);
-
-            using JsonDocument doc = JsonDocument.Parse(responseJson);
-            JsonElement root = doc.RootElement;
-
-            PrintUsage(root);
-
-            string text = ExtractGeminiText(root)
-                .Replace("```json", "")
-                .Replace("```", "")
-                .Trim();
-
-            Console.WriteLine("Raw Gemini JSON:");
-            Console.WriteLine(text);
-
-            if (IsValidJsonArray(text))
-                return text;
-
-            Console.WriteLine("Gemini returned invalid JSON. Retrying...");
-        }
-
-        return "[]";
-    }
-
-    private static bool IsValidJsonArray(string json)
-    {
-        try
-        {
-            using JsonDocument doc = JsonDocument.Parse(json);
-            return doc.RootElement.ValueKind == JsonValueKind.Array;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-    private static object CreateGenerateBody(string cacheName, string prompt)
-    {
-        return new
+        object requestBody = new
         {
             cachedContent = cacheName,
             contents = new[]
@@ -169,10 +107,30 @@ Required format:
             generationConfig = new
             {
                 temperature = 0.0,
-                maxOutputTokens = 512,
+                maxOutputTokens = 1024,
                 responseMimeType = "application/json"
             }
         };
+
+        // Retries only on Gemini temporary/server errors.
+        string responseJson = await PostJsonUntilSuccess(apiKey, GenerateEndpoint, requestBody);
+
+        using JsonDocument doc = JsonDocument.Parse(responseJson);
+        JsonElement root = doc.RootElement;
+
+        PrintUsage(root);
+
+        string text = ExtractGeminiText(root)
+            .Replace("```json", "")
+            .Replace("```", "")
+            .Trim();
+
+        Console.WriteLine("Raw Gemini JSON:");
+        Console.WriteLine(text);
+
+        // No gameplay validation here.
+        // If Gemini chooses a too-expensive card, we return it anyway.
+        return text;
     }
 
     private static async Task<string> GetOrCreateCache(string apiKey)
@@ -219,7 +177,6 @@ SKYTHRONE CARDS JSON:
 
                 systemInstruction = new
                 {
-                    role = "system",
                     parts = new[]
                     {
                         new
@@ -229,10 +186,10 @@ You are a SKYTHRONE card-game AI.
 Use the cached rulebook and cards as the source of truth.
 
 When choosing cards:
-- obey energy exactly
 - only choose cards from the current hand
 - never invent cards
-- never exceed available energy
+- energy is only information, not a hard limit
+- you may choose cards even if their cost is higher than current energy
 - return only valid JSON
 "
                         }
@@ -265,7 +222,7 @@ When choosing cards:
             cachedContentName = name;
             cachedFilesHash = currentHash;
 
-            // Refresh before real expiry to avoid using dead cache
+            // Refresh before real expiry to avoid using an expired cache.
             cacheExpiresAt = DateTimeOffset.UtcNow.Add(CacheTtl).AddMinutes(-5);
 
             Console.WriteLine($"Created Gemini cache: {cachedContentName}");
@@ -296,10 +253,10 @@ When choosing cards:
             {
                 Console.WriteLine($"Gemini temporary error on attempt {attempt}:");
                 Console.WriteLine(ex.Message);
-                Console.WriteLine("Retrying in 3 seconds...");
+                Console.WriteLine($"Retrying in {RetryDelay.TotalSeconds} seconds...");
 
                 attempt++;
-                await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+                await Task.Delay(RetryDelay, cancellationToken);
             }
         }
     }
@@ -342,15 +299,9 @@ When choosing cards:
             );
         }
 
-        // Do NOT retry bad requests / invalid API key / broken JSON forever.
         throw new Exception(
             $"Gemini non-retryable error: HTTP {status} {response.ReasonPhrase}\n{responseText}"
         );
-    }
-
-    private class GeminiRetryableException : Exception
-    {
-        public GeminiRetryableException(string message) : base(message) { }
     }
 
     private static string ExtractGeminiText(JsonElement root)
@@ -389,10 +340,8 @@ When choosing cards:
         return Convert.ToHexString(hash);
     }
 
-    private static string Escape(string value)
+    private class GeminiRetryableException : Exception
     {
-        return value
-            .Replace("\\", "\\\\")
-            .Replace("\"", "\\\"");
+        public GeminiRetryableException(string message) : base(message) { }
     }
 }

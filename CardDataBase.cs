@@ -123,7 +123,7 @@ class DataBase
        adrenaline: (sender, b, Card) =>
     {
 
-        for (int i = 0; i < b.p.board.Count; i++)
+        for (int i = 0; i < sender.board.Count; i++)
         {
             ((Unit)sender.board[i]).attack += 1;
             ((Unit)sender.board[i]).Health += 1;

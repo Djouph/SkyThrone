@@ -272,7 +272,7 @@ class TcpServer
     private async void HandleClient(TcpClient client)
     {
         NetworkStream stream = client.GetStream();
-        byte[] buffer = new byte[4096];
+        byte[] buffer = new byte[8096];
         int bytesRead;
 
         JoinRequest? request = null;

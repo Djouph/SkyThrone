@@ -358,6 +358,11 @@ class TcpServer
                         game.BattlePhase(); // GET LIST OF ATTACKS (AND MAYBE ADDED CARDS) TO ANIAMTE AT THE USER SIDE.
                         game.EndPhase();
 
+                        objresponse = p.PlayCard(rFB, game);
+                        json = JsonSerializer.Serialize(objresponse, options);
+                        byteresponse = Encoding.ASCII.GetBytes(json);
+                        stream.Write(byteresponse, 0, byteresponse.Length);
+
                         if (game.p.health < 1)
                         {
                             Console.WriteLine("DEFEAT");
@@ -368,11 +373,6 @@ class TcpServer
                             Console.WriteLine("VICTORY");
                             break;
                         }
-                        objresponse = p.PlayCard(rFB, game);
-                        json = JsonSerializer.Serialize(objresponse, options);
-                        byteresponse = Encoding.ASCII.GetBytes(json);
-                        stream.Write(byteresponse, 0, byteresponse.Length);
-
 
                         // TODO : send the response form the PlayCard function so the frontend can get the imformation
                     }

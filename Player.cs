@@ -59,6 +59,8 @@ class Enemy : PlayableUser
         energy = maxenergy;
         b.Draw(this);
 
+        if (this.hand.Count == 0) return;
+
         string result = await Api.Play(b, @"Prepere for battle based on the given rules, return the result STRICTLY in the json format of:
             {{
                 cardIndex : int, // cand index in hand

@@ -208,7 +208,7 @@ class Board
         }
         else
         {
-            if (user.deck.Count == 0)
+            if (user.deck.Count <= 0)
             {
                 Console.WriteLine("You are out of cards");
                 user.health--;

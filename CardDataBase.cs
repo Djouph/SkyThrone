@@ -55,7 +55,7 @@ class DataBase
        description: "Adrenaline: get +1 attack",
        attack: 1,
        Health: 2,
-       imgUrl: "evilhedgehog.png",
+       imgUrl: "evilhedghog.png",
        id: 1,
        faction: Faction.Small,
        adrenaline: (sender, b, Card) =>
@@ -199,6 +199,7 @@ class DataBase
         attack: 3,
         Health: 3,
         id: 9,
+        imgUrl: "capibara.png",
         faction: Faction.Small,
         onDeploy: (sender, b, Card) =>
         {

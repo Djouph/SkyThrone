@@ -319,6 +319,7 @@ class TcpServer
                     {
                         e = e,
                         playerId = playerId, // temp const id for now (Change later)
+                        hand = p.hand.Select((c) => c.id).ToList(),
                     };
 
 
@@ -427,6 +428,8 @@ class OkJoin
     public int playerId; // The id in the currnet on going game 
 
     public Enemy e;
+
+    public List<int> hand;
 }
 
 class RFB // Ready for battle 

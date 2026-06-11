@@ -339,10 +339,21 @@ class TcpServer
                             IncludeFields = true,  // This includes all fields (public and private)
                                                    // DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never  // Never ignore anything
                         };
-                        var rFB = JsonSerializer.Deserialize<RFB>(data, options);
-                        Response[] objresponse = new Response[] { };
+
+                        RFB rFB;
+                        Response[] objresponse;
                         String json;
                         byte[] byteresponse;
+
+                        try
+                        {
+                            rFB = JsonSerializer.Deserialize<RFB>(data, options);
+                            objresponse = new Response[] { };
+                        }
+                        catch // avoid invalid input
+                        {
+                            continue;
+                        }
 
                         if (rFB.cardPlayed != -1)
                         {

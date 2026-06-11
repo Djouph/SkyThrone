@@ -393,12 +393,12 @@ class TcpServer
             catch (SocketException ex) when (ex.SocketErrorCode == SocketError.ConnectionReset)
             {
                 Console.WriteLine("Client disconnected abruptly (SocketException 104).");
-                break;
+                continue;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error reading from client: {ex.Message}");
-                break;
+                continue;
             }
             // }
             // catch (Exception ex)

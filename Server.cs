@@ -366,12 +366,12 @@ class TcpServer
                         if (game.p.health < 1)
                         {
                             Console.WriteLine("DEFEAT");
-                            break;
+                            //break;
                         }
                         if (game.e.health < 1)
                         {
                             Console.WriteLine("VICTORY");
-                            break;
+                            //break;
                         }
 
                         // TODO : send the response form the PlayCard function so the frontend can get the imformation

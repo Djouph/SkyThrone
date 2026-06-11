@@ -116,7 +116,7 @@ class Board
         }
         else
         {
-            if (sender.board.Count < 7)
+            if (sender.board.Count < 6)
             {
                 sender.energy -= unit.cost;
                 sender.board.Add(unit);

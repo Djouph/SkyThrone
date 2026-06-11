@@ -25,7 +25,7 @@ abstract class PlayableUser
         hand = [];
         deck = [];
         board = [];
-        MaxBoardSize = 5;
+        MaxBoardSize = 6;
         MaxHandSize = 11;
         StartingHand = 3;
         energy = 1;
